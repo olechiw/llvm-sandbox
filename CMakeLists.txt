@@ -48,7 +48,7 @@ set( LLVM_LINK_COMPONENTS
   Vectorize
   )
 llvm_map_components_to_libnames(llvm_libs ${LLVM_LINK_COMPONENTS})
-message(STATUS ${llvm_libs})
+#message(STATUS ${llvm_libs})
 # Link against LLVM libraries
-target_link_libraries(simple-tool clangBasic clangDriver clangFrontend clangTooling clangFrontendTool  clangSerialization clangParse clangSema clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers clangStaticAnalyzerCore clangAnalysis clangARCMigrate clangRewrite clangRewriteFrontend clangEdit clangAST clangLex clangBasic clang-cpp clangCodeGen ${llvm_libs})
+target_link_libraries(simple-tool clangBasic clangDriver clangFrontend clangTooling clangFrontendTool  clangSerialization clangParse clangSema clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers clangStaticAnalyzerCore clangAnalysis clangARCMigrate clangRewrite clangRewriteFrontend clangEdit clangAST clangLex clangBasic clang-cpp clangCodeGen /usr/lib/llvm-16/lib/libLLVM.so)
 
