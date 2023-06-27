@@ -21,7 +21,7 @@ int main() {
     constexpr auto testCode = "int test() { return 2+2; }";
 
     InitializeAllTargetMCs();
-    InitializeAllAsmPrinters();
+/*    InitializeAllAsmPrinters();
 
     // Prepare compilation arguments
     vector<const char *> args;
@@ -66,5 +66,5 @@ int main() {
     CodeGenAction *compilerAction = new EmitAssemblyAction();
     Clang.ExecuteAction(*compilerAction);
 
-    buffer.release();
+    buffer.release();*/
 }
