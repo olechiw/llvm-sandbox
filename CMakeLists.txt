@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.10.0)
 project(TestProject)
 
-# Hacking this in here for my local installation
-
 find_package(LLVM REQUIRED CONFIG)
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
@@ -46,5 +44,5 @@ target_link_libraries(llvm-sandbox
         clangBasic
         clang-cpp
         clangCodeGen
-        /usr/lib/llvm-16/lib/libLLVM.so)
+        LLVM)
 
