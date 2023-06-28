@@ -8,6 +8,10 @@ CPPInterpreter::CPPInterpreter(const std::vector<std::string> &additionalCliArgu
     _fs = llvm::makeIntrusiveRefCnt<llvm::vfs::InMemoryFileSystem>();
 }
 
+void utilityFunction(int x) {
+    std::cout << "HEY " << x << std::endl;
+}
+
 std::unique_ptr<CPPInterpreter::Context> CPPInterpreter::compile(const std::unordered_set<std::string> &functionsToRetrieve) {
     std::unique_ptr<Context> out(new Context);
 
@@ -50,15 +54,24 @@ std::unique_ptr<CPPInterpreter::Context> CPPInterpreter::compile(const std::unor
     auto context = std::unique_ptr<llvm::LLVMContext>(action->takeLLVMContext());
     auto module = action->takeModule();
 
+    std::unordered_set<std::string> utilityFunctions = { "utilityFunction(int)" };
     std::unordered_map<std::string, std::string> mangledMapping;
     for (const auto &function  : module->getFunctionList()) {
         const auto demangled = llvm::demangle(function.getName().str());
+        std::cout << demangled << " " << function.getName().str() << std::endl;
         for (const auto &targetName : functionsToRetrieve) {
             if (demangled == targetName) {
                 mangledMapping[targetName] = function.getName().str();
             }
         }
+        for (const auto &utilityFunction : utilityFunctions) {
+            if (demangled == utilityFunction) {
+                mangledMapping[utilityFunction] = function.getName().str();
+            }
+        }
     }
+
+    // TODO: decouple JIT - its totally separate
 
     auto jitEngineExpected = llvm::orc::LLJITBuilder().create();
 
@@ -67,6 +80,16 @@ std::unique_ptr<CPPInterpreter::Context> CPPInterpreter::compile(const std::unor
         return out;
     }
     auto jitEngine = std::move(jitEngineExpected.get());
+    auto &dyLib = jitEngine->getMainJITDylib();
+    auto symbolPool = jitEngine->getExecutionSession().getSymbolStringPool();
+    auto err = dyLib.define(llvm::orc::absoluteSymbols({
+                {symbolPool->intern(mangledMapping["utilityFunction(int)"]), llvm::JITEvaluatedSymbol::fromPointer(&utilityFunction)}
+            }));
+
+    if (err) {
+        // TODO: Error Handling
+        return out;
+    }
     if (auto err = jitEngine->addIRModule(llvm::orc::ThreadSafeModule(std::move(module), std::move(context)))) {
         // TODO: Error handling
         return out;

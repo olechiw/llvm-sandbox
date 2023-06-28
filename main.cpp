@@ -7,7 +7,7 @@ int main() {
     llvm::InitializeNativeTargetAsmPrinter();
 
     constexpr auto testCodeFileName = "test.cpp";
-    constexpr auto testCode = "class A {public: const static int x=5;}; int test(int y) { return 2+A::x+y; }";
+    constexpr auto testCode = "extern void utilityFunction(int); class A {public: const static int x=5;}; int test(int y) { utilityFunction(3); return 2+A::x+y; }";
 
     CPPInterpreter interpreter;
 
