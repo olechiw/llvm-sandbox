@@ -25,7 +25,7 @@ set(CMAKE_CXX_STANDARD 17) # C++11...
 set(CMAKE_CXX_STANDARD_REQUIRED ON) #...is required...
 set(CMAKE_CXX_EXTENSIONS OFF) #...without compiler extensions like gnu++11
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-add_executable(simple-tool main.cpp)
+add_executable(simple-tool main.cpp CPPInterpreter.cpp CPPInterpreter.h)
 # Find the libraries that correspond to the LLVM components
 # that we wish to use
 # linking shared rn
