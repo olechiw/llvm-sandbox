@@ -26,7 +26,7 @@ int main() {
     InitializeNativeTargetAsmPrinter();
 
     constexpr auto testCodeFileName = "test.cpp";
-    constexpr auto testCode = "int test() { return 2+3; }";
+    constexpr auto testCode = "class A {public: const static int x=5;}; int test() { return 2+A::x; }";
 
     // Prepare compilation arguments
     vector<const char *> args;
