@@ -72,12 +72,11 @@ std::unique_ptr<CPPInterpreter::Context> CPPInterpreter::compile(const std::unor
         return out;
     }
 
-    // std::unique_ptr<llvm::ExecutionEngine> engine(llvm::EngineBuilder(std::move(module)).setEngineKind(llvm::EngineKind::JIT).create());
     for (const auto &targetName : functionsToRetrieve) {
-        // Nullptr if not found
+        // We are providing the mangled name because its mangled by the frontend (clang)
         auto value = jitEngine->lookup(mangledMapping[targetName]);
         if (value) {
-            out->functions[targetName] = (void*)value.get().toPtr<void*>();
+            out->functions[targetName] = value.get().toPtr<void*>();
         } else {
             out->functions[targetName] = nullptr;
         }
