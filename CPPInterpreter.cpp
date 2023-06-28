@@ -8,10 +8,11 @@ CPPInterpreter::CPPInterpreter(const std::vector<std::string> &additionalCliArgu
     _fs = llvm::makeIntrusiveRefCnt<llvm::vfs::InMemoryFileSystem>();
 }
 
-void CPPInterpreter::addFile(const std::string &fileName, const std::string &fileContents) {
+void CPPInterpreter::addFile(const std::string &fileName, const std::string &fileContents, bool header) {
     auto buffer = llvm::MemoryBuffer::getMemBufferCopy(llvm::StringRef(fileContents));
      _fs->addFile(llvm::Twine(fileName), 0, std::move(buffer));
-    _files.push_back(fileName);
+     if (!header)
+        _files.push_back(fileName);
 }
 
 void CPPInterpreter::resetFiles() {
@@ -38,6 +39,8 @@ CPPInterpreter::LLVMModuleAndContext CPPInterpreter::buildModule() {
     for (const auto &file : _files)
         args.push_back(file.c_str());
     clang::CompilerInvocation::CreateFromArgs(*compilerInvocation, llvm::ArrayRef(args), *diagEngine);
+    compilerInvocation->getLangOpts()->CPlusPlus = 1;
+    compilerInvocation->getLangOpts()->CPlusPlus20 = 1;
 
     clang::CompilerInstance compilerInstance;
     compilerInstance.setInvocation(compilerInvocation);

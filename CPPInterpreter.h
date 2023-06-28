@@ -29,7 +29,7 @@ public:
 
     explicit CPPInterpreter(const std::vector<std::string> &additionalCliArguments = std::vector<std::string>());
 
-    void addFile(const std::string &fileName, const std::string &fileContents);
+    void addFile(const std::string &fileName, const std::string &fileContents, bool header = false);
     void resetFiles();
 
     LLVMModuleAndContext buildModule();
