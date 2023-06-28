@@ -26,7 +26,7 @@ int main() {
     InitializeNativeTargetAsmPrinter();
 
     constexpr auto testCodeFileName = "test.cpp";
-    constexpr auto testCode = "class A {public: const static int x=5;}; int test() { return 2+A::x; }";
+    constexpr auto testCode = "class A {public: const static int x=5;}; int test(int y) { return 2+A::x+y; }";
 
     // Prepare compilation arguments
     vector<const char *> args;
@@ -83,8 +83,7 @@ int main() {
 
     std::string error;
 
-    cout << "Module function names: " << endl;
-    std::string targetName = "test()";
+    std::string targetName = "test(int)";
     std::string mangledTargetName;
     for (const auto &f  : llvmModule->getFunctionList()) {
         const auto demangled = llvm::demangle(f.getName().str());
@@ -92,36 +91,14 @@ int main() {
             mangledTargetName = f.getName().str();
         }
     }
-    cout << "targetName: " << targetName << endl;
-    cout << "mangledTargetName: " << mangledTargetName << endl;
 
-    llvm::Function *otherTest = llvmModule->getFunction(mangledTargetName);
-    if (otherTest) {
-        cout << "Found in module with " << mangledTargetName << endl;
-    }
-
-    auto &moduleRef = *llvmModule;
-    auto engine = llvm::EngineBuilder(std::move(llvmModule)).setEngineKind(llvm::EngineKind::Either).setErrorStr(&error).create();
-    engine->finalizeObject();
-    {
-        std::string mangledTestName;
-        raw_string_ostream mangledNameStream(mangledTestName);
-        Mangler::getNameWithPrefix(mangledNameStream, "test()", engine->getDataLayout());
-        std::cout << "engine Datalayout mangle: " << mangledTestName << endl;
-    }
-    {
-        std::string mangledTestName;
-        raw_string_ostream mangledNameStream(mangledTestName);
-        Mangler::getNameWithPrefix(mangledNameStream, "test()", moduleRef.getDataLayout());
-        std::cout << "module Datalayout mangle: " << mangledTestName << endl;
-    }
+    auto engine = llvm::EngineBuilder(std::move(llvmModule)).setEngineKind(llvm::EngineKind::JIT).setErrorStr(&error).create();
 
     llvm::Function *testFn = engine->FindFunctionNamed(mangledTargetName);
     if (testFn) {
-        cout << "Found in engine with " << mangledTargetName << endl;
-        auto v = ArrayRef<GenericValue>();
-        auto res = engine->runFunction(testFn, v);
-        cout << *res.IntVal.getRawData() << endl;
+        auto f = engine->getFunctionAddress(mangledTargetName);
+        using TestFunction = int (*)(int);
+        cout << ((TestFunction)f)(5) << endl;
     }
 
 }
