@@ -9,33 +9,38 @@
 #include <clang/CodeGen/CodeGenAction.h>
 #include <clang/Basic/TargetInfo.h>
 #include <clang/Lex/PreprocessorOptions.h>
+#include <clang/Driver/Driver.h>
 #include <llvm/Support/TargetSelect.h>
+#include <llvm/IR/Module.h>
+#include <llvm/ExecutionEngine/ExecutionEngine.h>
+#include <llvm/ExecutionEngine/GenericValue.h>
+#include <llvm/Demangle/Demangle.h>
+#include <llvm/IR/Mangler.h>
 
 using namespace std;
 using namespace clang;
 using namespace llvm;
 
 int main() {
+    InitializeNativeTarget();
+    InitializeNativeTargetAsmPrinter();
 
     constexpr auto testCodeFileName = "test.cpp";
-    constexpr auto testCode = "int test() { return 2+2; }";
-
-    InitializeAllTargetMCs();
-    InitializeAllAsmPrinters();
+    constexpr auto testCode = "int test() { return 2+3; }";
 
     // Prepare compilation arguments
     vector<const char *> args;
     args.push_back(testCodeFileName);
 
     // Prepare DiagnosticEngine
-    DiagnosticOptions DiagOpts;
+    DiagnosticOptions *DiagOpts = new DiagnosticOptions;
     TextDiagnosticPrinter *textDiagPrinter =
             new clang::TextDiagnosticPrinter(errs(),
-                                             &DiagOpts);
+                                             DiagOpts);
     IntrusiveRefCntPtr<clang::DiagnosticIDs> pDiagIDs;
-    DiagnosticsEngine *pDiagnosticsEngine =
+    auto pDiagnosticsEngine =
             new DiagnosticsEngine(pDiagIDs,
-                                  &DiagOpts,
+                                  DiagOpts,
                                   textDiagPrinter);
 
     // Initialize CompilerInvocation
@@ -45,26 +50,78 @@ int main() {
     // Map code filename to a memoryBuffer
     StringRef testCodeData(testCode);
     unique_ptr<MemoryBuffer> buffer = MemoryBuffer::getMemBufferCopy(testCodeData);
-    CI->getPreprocessorOpts().addRemappedFile(testCodeFileName, buffer.get());
-
 
     // Create and initialize CompilerInstance
     CompilerInstance Clang;
     Clang.setInvocation(CI);
     Clang.createDiagnostics();
 
-    // Set target (I guess I can initialize only the BPF target, but I don't know how)
-    InitializeAllTargets();
+    auto fs = makeIntrusiveRefCnt<vfs::InMemoryFileSystem>();
+    Clang.setFileManager(new clang::FileManager(clang::FileSystemOptions{}, fs));
+    Clang.createSourceManager(Clang.getFileManager());
+    fs->addFile(llvm::Twine(testCodeFileName), 0, std::move(buffer));
+
+
     const std::shared_ptr<clang::TargetOptions> targetOptions = std::make_shared<clang::TargetOptions>();
-    targetOptions->Triple = targetOptions->HostTriple;
+    targetOptions->Triple = LLVM_HOST_TRIPLE;
     cout << targetOptions->Triple << endl;
     TargetInfo *pTargetInfo = TargetInfo::CreateTargetInfo(*pDiagnosticsEngine,targetOptions);
     Clang.setTarget(pTargetInfo);
 
     // Create and execute action
-    // CodeGenAction *compilerAction = new EmitLLVMOnlyAction();
-    CodeGenAction *compilerAction = new EmitAssemblyAction();
-    Clang.ExecuteAction(*compilerAction);
+    EmitLLVMOnlyAction *compilerAction = new EmitLLVMOnlyAction();
+    if (!Clang.ExecuteAction(*compilerAction)) {
+        return -1;
+    }
 
-    buffer.release();
+    auto llvmModule = compilerAction->takeModule();
+
+    if (!llvmModule) {
+        cout << "No module" << endl;
+        return -1;
+    }
+
+    std::string error;
+
+    cout << "Module function names: " << endl;
+    std::string targetName = "test()";
+    std::string mangledTargetName;
+    for (const auto &f  : llvmModule->getFunctionList()) {
+        const auto demangled = llvm::demangle(f.getName().str());
+        if (demangled == targetName) {
+            mangledTargetName = f.getName().str();
+        }
+    }
+    cout << "targetName: " << targetName << endl;
+    cout << "mangledTargetName: " << mangledTargetName << endl;
+
+    llvm::Function *otherTest = llvmModule->getFunction(mangledTargetName);
+    if (otherTest) {
+        cout << "Found in module with " << mangledTargetName << endl;
+    }
+
+    auto &moduleRef = *llvmModule;
+    auto engine = llvm::EngineBuilder(std::move(llvmModule)).setEngineKind(llvm::EngineKind::Either).setErrorStr(&error).create();
+    engine->finalizeObject();
+    {
+        std::string mangledTestName;
+        raw_string_ostream mangledNameStream(mangledTestName);
+        Mangler::getNameWithPrefix(mangledNameStream, "test()", engine->getDataLayout());
+        std::cout << "engine Datalayout mangle: " << mangledTestName << endl;
+    }
+    {
+        std::string mangledTestName;
+        raw_string_ostream mangledNameStream(mangledTestName);
+        Mangler::getNameWithPrefix(mangledNameStream, "test()", moduleRef.getDataLayout());
+        std::cout << "module Datalayout mangle: " << mangledTestName << endl;
+    }
+
+    llvm::Function *testFn = engine->FindFunctionNamed(mangledTargetName);
+    if (testFn) {
+        cout << "Found in engine with " << mangledTargetName << endl;
+        auto v = ArrayRef<GenericValue>();
+        auto res = engine->runFunction(testFn, v);
+        cout << *res.IntVal.getRawData() << endl;
+    }
+
 }

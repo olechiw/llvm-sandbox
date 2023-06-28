@@ -19,6 +19,7 @@ add_definitions(${LLVM_DEFINITIONS_LIST})
 
 # Now build our tools
 
+#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG")
 
 set(CMAKE_CXX_STANDARD 17) # C++11...
 set(CMAKE_CXX_STANDARD_REQUIRED ON) #...is required...
