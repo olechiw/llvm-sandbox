@@ -23,9 +23,11 @@ std::unique_ptr<CPPInterpreter::Context> CPPInterpreter::compile(const std::unor
     // Initialize CompilerInvocation
     auto compilerInvocation = std::make_shared<clang::CompilerInvocation>();
     std::vector<const char *> args {};
-    for (const auto &arg : _additionalCliArguments) args.push_back(arg.c_str());
-    for (const auto &file : _files) args.push_back(file.c_str());
-    assert(args.size() != 0);
+    args.reserve(_additionalCliArguments.size() + _files.size());
+    for (const auto &arg : _additionalCliArguments)
+        args.push_back(arg.c_str());
+    for (const auto &file : _files)
+        args.push_back(file.c_str());
     clang::CompilerInvocation::CreateFromArgs(*compilerInvocation, llvm::ArrayRef(args), *diagEngine);
 
     clang::CompilerInstance compilerInstance;
@@ -45,29 +47,43 @@ std::unique_ptr<CPPInterpreter::Context> CPPInterpreter::compile(const std::unor
         return out;
     }
 
+    auto context = std::unique_ptr<llvm::LLVMContext>(action->takeLLVMContext());
     auto module = action->takeModule();
 
     std::unordered_map<std::string, std::string> mangledMapping;
     for (const auto &function  : module->getFunctionList()) {
         const auto demangled = llvm::demangle(function.getName().str());
         for (const auto &targetName : functionsToRetrieve) {
-            std::cout << function.getName().str();
             if (demangled == targetName) {
-                std::cout << " " << demangled;
                 mangledMapping[targetName] = function.getName().str();
             }
-            std::cout << std::endl;
         }
     }
 
-    std::unique_ptr<llvm::ExecutionEngine> engine(llvm::EngineBuilder(std::move(module)).setEngineKind(llvm::EngineKind::JIT).create());
+    auto jitEngineExpected = llvm::orc::LLJITBuilder().create();
 
-    for (const auto &targetName : functionsToRetrieve) {
-        // Nullptr if not found
-        out->functions[targetName] = (void*)engine->getFunctionAddress(mangledMapping[targetName]);
+    if (!jitEngineExpected) {
+        // TODO: Error handling
+        return out;
+    }
+    auto jitEngine = std::move(jitEngineExpected.get());
+    if (auto err = jitEngine->addIRModule(llvm::orc::ThreadSafeModule(std::move(module), std::move(context)))) {
+        // TODO: Error handling
+        return out;
     }
 
-    out->engine = std::move(engine);
+    // std::unique_ptr<llvm::ExecutionEngine> engine(llvm::EngineBuilder(std::move(module)).setEngineKind(llvm::EngineKind::JIT).create());
+    for (const auto &targetName : functionsToRetrieve) {
+        // Nullptr if not found
+        auto value = jitEngine->lookup(mangledMapping[targetName]);
+        if (value) {
+            out->functions[targetName] = (void*)value.get().toPtr<void*>();
+        } else {
+            out->functions[targetName] = nullptr;
+        }
+    }
+
+    out->engine = std::move(jitEngine);
     return std::move(out);
 }
 

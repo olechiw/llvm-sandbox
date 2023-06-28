@@ -18,6 +18,8 @@
 #include <llvm/Support/VirtualFileSystem.h>
 #include <llvm/Support/TargetSelect.h>
 
+#include <llvm/ExecutionEngine/Orc/LLJIT.h>
+
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Frontend/CompilerInvocation.h>
 #include <clang/Frontend/TextDiagnosticPrinter.h>
@@ -34,15 +36,15 @@ public:
     void addFile(const std::string &fileName, const std::string &fileContents);
     void resetFiles();
 
-    struct Context;
-    std::unique_ptr<Context> compile(const std::unordered_set<std::string> &functionsToRetrieve);
     struct Context {
         friend class CPPInterpreter;
         std::unordered_map<std::string, void *> functions;
     private:
         Context() = default;
-        std::unique_ptr<llvm::ExecutionEngine> engine;
+        std::unique_ptr<llvm::orc::LLJIT> engine;
     };
+
+    std::unique_ptr<Context> compile(const std::unordered_set<std::string> &functionsToRetrieve);
 private:
     std::vector<std::string> _additionalCliArguments {};
     llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> _fs {};
