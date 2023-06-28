@@ -46,11 +46,13 @@ public:
         std::unique_ptr<llvm::orc::LLJIT> engine;
     };
 
-    std::unique_ptr<Context> compile(const std::unordered_set<std::string> &functionsToRetrieve);
+    std::unique_ptr<Context> compile();
 private:
     std::vector<std::string> _additionalCliArguments {};
     llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> _fs {};
     std::vector<std::string> _files {};
+
+    std::unique_ptr<Context> makeContext(std::unique_ptr<llvm::Module> module, std::unique_ptr<llvm::LLVMContext> context);
 };
 
 

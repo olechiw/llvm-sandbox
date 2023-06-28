@@ -14,7 +14,7 @@ int main() {
     interpreter.addFile(testCodeFileName, testCode);
 
     const std::string funcName { "test(int)" };
-    auto context = interpreter.compile({ funcName });
+    auto context = interpreter.compile();
 
     using TestFunction = int (*)(int);
     auto ptr = context->functions[funcName];

@@ -12,9 +12,7 @@ void utilityFunction(int x) {
     std::cout << "HEY " << x << std::endl;
 }
 
-std::unique_ptr<CPPInterpreter::Context> CPPInterpreter::compile(const std::unordered_set<std::string> &functionsToRetrieve) {
-    std::unique_ptr<Context> out(new Context);
-
+std::unique_ptr<CPPInterpreter::Context> CPPInterpreter::compile() {
     auto diagOpts = llvm::makeIntrusiveRefCnt<clang::DiagnosticOptions>();
     auto diagIDs = llvm::makeIntrusiveRefCnt<clang::DiagnosticIDs>();
     auto diagPrinter = new clang::TextDiagnosticPrinter(llvm::errs(),
@@ -48,65 +46,13 @@ std::unique_ptr<CPPInterpreter::Context> CPPInterpreter::compile(const std::unor
 
     auto action = std::make_shared<clang::EmitLLVMOnlyAction>();
     if (!compilerInstance.ExecuteAction(*action)) {
-        return out;
+        return nullptr;
     }
 
     auto context = std::unique_ptr<llvm::LLVMContext>(action->takeLLVMContext());
     auto module = action->takeModule();
 
-    std::unordered_set<std::string> utilityFunctions = { "utilityFunction(int)" };
-    std::unordered_map<std::string, std::string> mangledMapping;
-    for (const auto &function  : module->getFunctionList()) {
-        const auto demangled = llvm::demangle(function.getName().str());
-        std::cout << demangled << " " << function.getName().str() << std::endl;
-        for (const auto &targetName : functionsToRetrieve) {
-            if (demangled == targetName) {
-                mangledMapping[targetName] = function.getName().str();
-            }
-        }
-        for (const auto &utilityFunction : utilityFunctions) {
-            if (demangled == utilityFunction) {
-                mangledMapping[utilityFunction] = function.getName().str();
-            }
-        }
-    }
-
-    // TODO: decouple JIT - its totally separate
-
-    auto jitEngineExpected = llvm::orc::LLJITBuilder().create();
-
-    if (!jitEngineExpected) {
-        // TODO: Error handling
-        return out;
-    }
-    auto jitEngine = std::move(jitEngineExpected.get());
-    auto &dyLib = jitEngine->getMainJITDylib();
-    auto symbolPool = jitEngine->getExecutionSession().getSymbolStringPool();
-    auto err = dyLib.define(llvm::orc::absoluteSymbols({
-                {symbolPool->intern(mangledMapping["utilityFunction(int)"]), llvm::JITEvaluatedSymbol::fromPointer(&utilityFunction)}
-            }));
-
-    if (err) {
-        // TODO: Error Handling
-        return out;
-    }
-    if (auto err = jitEngine->addIRModule(llvm::orc::ThreadSafeModule(std::move(module), std::move(context)))) {
-        // TODO: Error handling
-        return out;
-    }
-
-    for (const auto &targetName : functionsToRetrieve) {
-        // We are providing the mangled name because its mangled by the frontend (clang)
-        auto value = jitEngine->lookup(mangledMapping[targetName]);
-        if (value) {
-            out->functions[targetName] = value.get().toPtr<void*>();
-        } else {
-            out->functions[targetName] = nullptr;
-        }
-    }
-
-    out->engine = std::move(jitEngine);
-    return std::move(out);
+    return std::move(makeContext(std::move(module), std::move(context)));
 }
 
 void CPPInterpreter::addFile(const std::string &fileName, const std::string &fileContents) {
@@ -118,4 +64,53 @@ void CPPInterpreter::addFile(const std::string &fileName, const std::string &fil
 void CPPInterpreter::resetFiles() {
     _fs.reset();
     _fs = llvm::makeIntrusiveRefCnt<llvm::vfs::InMemoryFileSystem>();
+}
+
+std::unique_ptr<CPPInterpreter::Context> CPPInterpreter::makeContext(std::unique_ptr<llvm::Module> module, std::unique_ptr<llvm::LLVMContext> context) {
+    std::unique_ptr<Context> out(new Context);
+
+    std::unordered_map<std::string, std::string> mangledMapping;
+    for (const auto &function  : module->getFunctionList()) {
+        const auto demangled = llvm::demangle(function.getName().str());
+        mangledMapping[demangled] = function.getName().str();
+    }
+
+    auto jitEngineExpected = llvm::orc::LLJITBuilder().create();
+
+    if (!jitEngineExpected) {
+        // TODO: Error handling
+        return nullptr;
+    }
+    auto jitEngine = std::move(jitEngineExpected.get());
+    auto &dyLib = jitEngine->getMainJITDylib();
+    auto symbolPool = jitEngine->getExecutionSession().getSymbolStringPool();
+    auto err = dyLib.define(
+            llvm::orc::absoluteSymbols(
+                    {
+                        {symbolPool->intern(mangledMapping["utilityFunction(int)"]),
+                         llvm::JITEvaluatedSymbol::fromPointer(&utilityFunction)}
+    }));
+
+    if (err) {
+        // TODO: Error Handling
+        return nullptr;
+    }
+    err = jitEngine->addIRModule(llvm::orc::ThreadSafeModule(std::move(module), std::move(context)));
+    if (err) {
+        // TODO: Error handling
+        return nullptr;
+    }
+
+    for (const auto &[targetName, mangledName] : mangledMapping) {
+        // We are providing the mangled name because it was mangled by the frontend (clang)
+        auto value = jitEngine->lookup(mangledName);
+        if (value) {
+            out->functions[targetName] = value.get().toPtr<void*>();
+        } else {
+            out->functions[targetName] = nullptr;
+        }
+    }
+
+    out->engine = std::move(jitEngine);
+    return std::move(out);
 }
