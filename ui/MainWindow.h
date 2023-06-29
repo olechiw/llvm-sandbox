@@ -15,6 +15,7 @@
 
 class MainWindow {
 public:
+    static constexpr float fontSize = 13.f;
     MainWindow(Context &context);
     ~MainWindow();
     void show();

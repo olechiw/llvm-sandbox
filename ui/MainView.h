@@ -22,9 +22,6 @@ public:
     void render();
     bool isOpen() const { return _is_open; }
 private:
-    // DiagnosticsConsumer
-    // CPPInterpreter
-    // JITExecutor
     // EditorView
     // OutputView
     // will files have a model?

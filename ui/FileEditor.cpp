@@ -48,6 +48,10 @@ void FileEditor::createNewFile() {
 
 }
 
+void FileEditor::saveEvent() {
+    _saveEventPending = true;
+}
+
 void FileEditor::saveFile(const FileEditor::FileTabState &stateToSave) {
     _context.createOrOverwriteFile({stateToSave.metadata, stateToSave.editor.GetText()});
 }

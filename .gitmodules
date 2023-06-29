@@ -4,3 +4,9 @@
 [submodule "ImGuiColorTextEdit"]
 	path = dependencies/ImGuiColorTextEdit
 	url = git@github.com:santaclose/ImGuiColorTextEdit.git
+[submodule "dependencies/IconFontCppHeaders"]
+	path = dependencies/IconFontCppHeaders
+	url = git@github.com:juliettef/IconFontCppHeaders.git
+[submodule "dependencies/Fork-Awesome"]
+	path = dependencies/Fork-Awesome
+	url = git@github.com:ForkAwesome/Fork-Awesome.git

@@ -4,6 +4,8 @@
 
 #include "MainWindow.h"
 
+#include "fonts/Loader.h"
+
 MainWindow::MainWindow(Context &context) : _mainView(context) {
     // Setup SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
@@ -57,7 +59,7 @@ MainWindow::MainWindow(Context &context) : _mainView(context) {
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     // Load Fonts
-    io.Fonts->AddFontDefault();
+    Fonts::loadFonts();
 }
 
 void MainWindow::show() {

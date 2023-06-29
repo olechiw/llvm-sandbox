@@ -16,7 +16,7 @@
 
 class FileEditor {
 public:
-    FileEditor(Context &context);
+    explicit FileEditor(Context &context);
     void render();
     void saveEvent();
 
