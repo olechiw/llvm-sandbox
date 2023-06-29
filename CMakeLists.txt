@@ -22,9 +22,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(llvm-sandbox main.cpp CPPInterpreter.cpp CPPInterpreter.h SandboxJIT.cpp SandboxJIT.h
         imgui/imgui.cpp imgui/backends/imgui_impl_opengl3.cpp imgui/backends/imgui_impl_sdl2.cpp
-        imgui/imgui_demo.cpp imgui/imgui_draw.cpp imgui/imgui_tables.cpp imgui/imgui_widgets.cpp)
+        imgui/imgui_demo.cpp imgui/imgui_draw.cpp imgui/imgui_tables.cpp imgui/imgui_widgets.cpp
+        ImGuiColorTextEdit/TextEditor.cpp ImGuiColorTextEdit/LanguageDefinitions.cpp)
 # Link against LLVM libraries
-target_include_directories(llvm-sandbox PUBLIC "${CMAKE_SOURCE_DIR}/imgui")
+target_include_directories(llvm-sandbox PUBLIC "${CMAKE_SOURCE_DIR}/imgui" PUBLIC "${CMAKE_SOURCE_DIR}/ImGuiColorTextEdit/vendor/regex/include")
 target_link_libraries(llvm-sandbox
         clangBasic
         clangDriver
