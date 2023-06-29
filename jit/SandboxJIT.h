@@ -17,10 +17,13 @@
 #include <llvm/IR/Module.h>
 #include <llvm/Demangle/Demangle.h>
 
+#include "../DiagnosticsConsumer.h"
+#include "../FileSystem.h"
+#include "CPPInterpreter.h"
 
 class SandboxJIT {
 public:
-    using LLVMModuleAndContext = std::tuple<std::unique_ptr<llvm::Module>, std::unique_ptr<llvm::LLVMContext>>;
+    explicit SandboxJIT(DiagnosticsConsumer &diagnosticsConsumer);
 
     struct JITContext {
         friend class SandboxJIT;
@@ -30,10 +33,17 @@ public:
         std::unique_ptr<llvm::orc::LLJIT> engine;
     };
 
-    std::unique_ptr<JITContext> create(LLVMModuleAndContext llvmModuleAndContext);
-    void registerFunctionToDyLib(const std::string &symbol, void *address);
+    using DynamicLibraries = std::unordered_map<std::string, void*>;
+    using FileSystem = std::unordered_map<std::string, File>;
+    std::unique_ptr<JITContext> execute(const FileSystem &files, const DynamicLibraries &dynamicLibraries = DynamicLibraries());
+
 private:
+    std::unique_ptr<JITContext> create(CPPInterpreter::LLVMModuleAndContext llvmModuleAndContext);
+    void registerFunctionToDyLib(const std::string &symbol, void *address);
+
     std::unordered_map<std::string, void*> _registeredFunctions;
+    DiagnosticsConsumer &_diagnosticsConsumer;
+    CPPInterpreter _interpreter;
 };
 
 

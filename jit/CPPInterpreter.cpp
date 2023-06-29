@@ -4,7 +4,7 @@
 
 #include "CPPInterpreter.h"
 
-CPPInterpreter::CPPInterpreter(const std::vector<std::string> &additionalCliArguments) : _additionalCliArguments(additionalCliArguments) {
+CPPInterpreter::CPPInterpreter(DiagnosticsConsumer &diagnosticsConsumer, const std::vector<std::string> &additionalCliArguments) : _diagnosticsConsumer(diagnosticsConsumer), _additionalCliArguments(additionalCliArguments) {
     _fs = llvm::makeIntrusiveRefCnt<llvm::vfs::InMemoryFileSystem>();
 }
 
@@ -16,14 +16,15 @@ void CPPInterpreter::addFile(const std::string &fileName, const std::string &fil
 }
 
 void CPPInterpreter::resetFiles() {
-    _fs.reset();
     _fs = llvm::makeIntrusiveRefCnt<llvm::vfs::InMemoryFileSystem>();
 }
 
 CPPInterpreter::LLVMModuleAndContext CPPInterpreter::buildModule() {
     auto diagOpts = llvm::makeIntrusiveRefCnt<clang::DiagnosticOptions>();
     auto diagIDs = llvm::makeIntrusiveRefCnt<clang::DiagnosticIDs>();
-    auto diagPrinter = new clang::TextDiagnosticPrinter(llvm::errs(),
+    std::string errorOutput;
+    llvm::raw_string_ostream errorStream(errorOutput);
+    auto diagPrinter = new clang::TextDiagnosticPrinter(errorStream,
                                                         diagOpts.get());
     auto diagEngine =
             llvm::makeIntrusiveRefCnt<clang::DiagnosticsEngine>(diagIDs,
@@ -56,6 +57,10 @@ CPPInterpreter::LLVMModuleAndContext CPPInterpreter::buildModule() {
 
     auto action = std::make_shared<clang::EmitLLVMOnlyAction>();
     if (!compilerInstance.ExecuteAction(*action)) {
+        _diagnosticsConsumer.push({DiagnosticsConsumer::Type::User,
+                                   DiagnosticsConsumer::Level::Error,
+                                   "Failed to Compile",
+                                   errorOutput});
         return std::make_tuple(nullptr, nullptr);
     }
 

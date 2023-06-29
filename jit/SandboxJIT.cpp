@@ -4,7 +4,11 @@
 
 #include "SandboxJIT.h"
 
-std::unique_ptr<SandboxJIT::JITContext> SandboxJIT::create(SandboxJIT::LLVMModuleAndContext llvmModuleAndContext) {
+SandboxJIT::SandboxJIT(DiagnosticsConsumer &diagnosticsConsumer) :
+    _diagnosticsConsumer(diagnosticsConsumer),
+    _interpreter(diagnosticsConsumer) {}
+
+std::unique_ptr<SandboxJIT::JITContext> SandboxJIT::create(CPPInterpreter::LLVMModuleAndContext llvmModuleAndContext) {
     std::unique_ptr<JITContext> out(new JITContext);
 
     auto [module, context] = std::move(llvmModuleAndContext);
@@ -18,7 +22,10 @@ std::unique_ptr<SandboxJIT::JITContext> SandboxJIT::create(SandboxJIT::LLVMModul
     auto jitEngineExpected = llvm::orc::LLJITBuilder().create();
 
     if (!jitEngineExpected) {
-        // TODO: Error handling
+        _diagnosticsConsumer.push({DiagnosticsConsumer::Type::System,
+                                   DiagnosticsConsumer::Level::Error,
+                                   "Failed To Construct JIT Engine",
+                                   toString(jitEngineExpected.takeError())});
         return nullptr;
     }
     auto jitEngine = std::move(jitEngineExpected.get());
@@ -35,12 +42,18 @@ std::unique_ptr<SandboxJIT::JITContext> SandboxJIT::create(SandboxJIT::LLVMModul
     auto err = dyLib.define(llvm::orc::absoluteSymbols(symbolsToRegister));
 
     if (err) {
-        // TODO: Error Handling
+        _diagnosticsConsumer.push({DiagnosticsConsumer::Type::System,
+                                   DiagnosticsConsumer::Level::Error,
+                                   "Failed to define system dynamic libraries",
+                                   toString(std::move(err))});
         return nullptr;
     }
     err = jitEngine->addIRModule(llvm::orc::ThreadSafeModule(std::move(module), std::move(context)));
     if (err) {
-        // TODO: Error handling
+        _diagnosticsConsumer.push({DiagnosticsConsumer::Type::User,
+                                   DiagnosticsConsumer::Level::Error,
+                                   "Failed to JIT user's module",
+                                   toString(std::move(err))});
         return nullptr;
     }
 
@@ -60,4 +73,16 @@ std::unique_ptr<SandboxJIT::JITContext> SandboxJIT::create(SandboxJIT::LLVMModul
 
 void SandboxJIT::registerFunctionToDyLib(const std::string &symbol, void *address) {
     _registeredFunctions[symbol] = address;
+}
+
+std::unique_ptr<SandboxJIT::JITContext> SandboxJIT::execute(const FileSystem &files, const SandboxJIT::DynamicLibraries &dynamicLibraries) {
+    // TODO: Compile cpp files one by one?
+    _interpreter.resetFiles();
+    for (const auto &[fileName, file] : files) {
+        _interpreter.addFile(fileName, file.contents, file.type == File::Type::H);
+    }
+    for (const auto &[symbol, address] : dynamicLibraries) {
+        registerFunctionToDyLib(symbol, address);
+    }
+    return create(_interpreter.buildModule());
 }
