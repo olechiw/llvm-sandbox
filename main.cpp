@@ -36,7 +36,7 @@ int main() {
     Context context;
     using TestFunction = decltype(test);
     context.createOrOverwriteFile({testCodeFileName, testCode, File::Type::CPP});
-    context.createOrOverwriteFile({testHeaderFileName, testHeader, File::Type::H});
+    context.createOrOverwriteFile({testHeaderFileName, testHeader, File::Type::H, true});
     context.setDynamicLibraries({{"utilityFunction(int)", (void*)utilityFunction}});
     context.executeCode();
     auto ptr = context.getFunction<TestFunction>("test(int)");

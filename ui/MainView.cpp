@@ -4,8 +4,7 @@
 
 #include "MainView.h"
 
-MainView::MainView(Context &context) : _context(context) {
-    _editor.SetLanguageDefinition(TextEditor::LanguageDefinition::CPlusPlus());
+MainView::MainView(Context &context) : _context(context), _fileEditor(context) {
 }
 
 void MainView::render() {
@@ -22,18 +21,7 @@ void MainView::render() {
         ImGui::EndMenuBar();
     }
 
-    if (ImGui::BeginTabBar("Files")) {
-        if (ImGui::BeginTabItem("main.cpp")) {
-            _editor.Render("TestEditor");
-            ImGui::EndTabItem();
-        }
-        if (ImGui::BeginTabItem("fps")) {
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-            ImGui::EndTabItem();
-        }
-        ImGui::TabItemButton("+");
-        ImGui::EndTabBar();
-    }
+    _fileEditor.render();
 
     ImGui::End();
 }

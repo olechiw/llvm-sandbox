@@ -16,6 +16,7 @@ struct File {
     std::string name;
     std::string contents;
     Type type;
+    bool isReadOnly { false };
 };
 using FileSystem = std::unordered_map<std::string, File>;
 

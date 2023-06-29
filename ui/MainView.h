@@ -14,6 +14,7 @@
 
 #include "../DiagnosticsConsumer.h"
 #include "../Context.h"
+#include "FileEditor.h"
 
 class MainView {
 public:
@@ -27,8 +28,8 @@ private:
     // EditorView
     // OutputView
     // will files have a model?
+    FileEditor _fileEditor;
     Context &_context;
-    TextEditor _editor;
     bool _is_open { true };
 };
 

@@ -47,7 +47,7 @@ public:
         }
     }
 
-    template <typename T>
+    template <typename T = void*>
     T *getFunction(const std::string &functionName) {
         if (_jitContext)
             return (T*)_jitContext->functions[functionName];
