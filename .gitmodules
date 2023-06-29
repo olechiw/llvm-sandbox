@@ -1,6 +1,6 @@
 [submodule "imgui"]
-	path = imgui
+	path = dependencies/imgui
 	url = git@github.com:ocornut/imgui.git
 [submodule "ImGuiColorTextEdit"]
-	path = ImGuiColorTextEdit
+	path = dependencies/ImGuiColorTextEdit
 	url = git@github.com:santaclose/ImGuiColorTextEdit.git

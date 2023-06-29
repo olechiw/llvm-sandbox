@@ -19,13 +19,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON) #...is required...
 set(CMAKE_CXX_EXTENSIONS OFF) #...without compiler extensions like gnu++11
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(IMGUI_DIR dependencies/imgui)
+set(TEXTEDIT_DIR dependencies/ImGuiColorTextEdit)
 
-add_executable(llvm-sandbox main.cpp CPPInterpreter.cpp CPPInterpreter.h SandboxJIT.cpp SandboxJIT.h
-        imgui/imgui.cpp imgui/backends/imgui_impl_opengl3.cpp imgui/backends/imgui_impl_sdl2.cpp
-        imgui/imgui_demo.cpp imgui/imgui_draw.cpp imgui/imgui_tables.cpp imgui/imgui_widgets.cpp
-        ImGuiColorTextEdit/TextEditor.cpp ImGuiColorTextEdit/LanguageDefinitions.cpp)
+add_executable(llvm-sandbox main.cpp jit/CPPInterpreter.cpp jit/CPPInterpreter.h jit/SandboxJIT.cpp jit/SandboxJIT.h
+        ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp ${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp
+        ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_draw.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp
+        ${TEXTEDIT_DIR}/TextEditor.cpp ${TEXTEDIT_DIR}/LanguageDefinitions.cpp)
 # Link against LLVM libraries
-target_include_directories(llvm-sandbox PUBLIC "${CMAKE_SOURCE_DIR}/imgui" PUBLIC "${CMAKE_SOURCE_DIR}/ImGuiColorTextEdit/vendor/regex/include")
+target_include_directories(llvm-sandbox PUBLIC "${CMAKE_SOURCE_DIR}/${IMGUI_DIR}" PUBLIC "${CMAKE_SOURCE_DIR}/${TEXTEDIT_DIR}/vendor/regex/include" PUBLIC "${CMAKE_SOURCE_DIR}/${TEXTEDIT_DIR}")
 target_link_libraries(llvm-sandbox
         clangBasic
         clangDriver

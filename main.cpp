@@ -1,12 +1,12 @@
 #include <iostream>
 
-#include "CPPInterpreter.h"
-#include "SandboxJIT.h"
+#include "jit/CPPInterpreter.h"
+#include "jit/SandboxJIT.h"
 
-#include "imgui.h"
-#include "backends/imgui_impl_opengl3.h"
-#include "backends/imgui_impl_sdl2.h"
-#include "ImGuiColorTextEdit/TextEditor.h"
+#include <imgui.h>
+#include <backends/imgui_impl_opengl3.h>
+#include <backends/imgui_impl_sdl2.h>
+#include <TextEditor.h>
 
 #include <SDL.h>
 #if defined(IMGUI_IMPL_OPENGL_ES2)
