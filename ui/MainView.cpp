@@ -27,11 +27,9 @@ void MainView::render() {
         }
         ImGui::EndMenuBar();
     }
-    ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, {0.5f, 0.5f});
     ImGui::Button(ICON_FA_SAVE);
     ImGui::SameLine();
     ImGui::Button(ICON_FA_FILE);
-    ImGui::PopStyleVar();
     _fileEditor.render();
 
     ImGui::End();
