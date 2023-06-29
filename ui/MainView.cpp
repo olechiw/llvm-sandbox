@@ -22,13 +22,16 @@ void MainView::render() {
 
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu("File")) {
-//            ImGui::MenuItem(ICON_FK_WINDOW_CLOSE_O "Exit");
+            ImGui::MenuItem(ICON_FA_DOOR_OPEN " Exit");
             ImGui::EndMenu();
         }
         ImGui::EndMenuBar();
     }
-    ImGui::Text(ICON_FA_DOOR_OPEN "Exit");
-
+    ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, {0.5f, 0.5f});
+    ImGui::Button(ICON_FA_SAVE);
+    ImGui::SameLine();
+    ImGui::Button(ICON_FA_FILE);
+    ImGui::PopStyleVar();
     _fileEditor.render();
 
     ImGui::End();

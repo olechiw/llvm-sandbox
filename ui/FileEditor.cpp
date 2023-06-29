@@ -4,6 +4,7 @@
 
 #include "FileEditor.h"
 
+#include "fonts/IconsFontAwesome5.h"
 
 FileEditor::FileEditor(Context &context) : _context(context) {
     auto fileSystemCopy = _context.getFiles();
