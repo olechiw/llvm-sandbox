@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "jit/CPPInterpreter.h"
-#include "jit/SandboxJIT.h"
+#include "jit/JITExecutor.h"
 #include "ui/MainWindow.h"
 
 #include <imgui.h>
@@ -28,21 +28,21 @@ int test(int) { return 0; }
 
 int main() {
     constexpr auto testCodeFileName = "test.cpp";
-    constexpr auto testCode = "#include \"test.h\"\n class A {public: const static int x=5;}; int test(int y) { utilityFunction(3);\n return 2+A::x+y; }";
+    constexpr auto testCode = "#include \"system_headers.h\"\nclass A {\npublic:\n\tconst static int x=5;\n};\nint test(int y) {\n\tutilityFunction(3);\n\treturn 2+A::x+y;\n}";
 
-    constexpr auto testHeaderFileName = "test.h";
+    constexpr auto testHeaderFileName = "system_headers.h";
     constexpr auto testHeader = "extern void utilityFunction(int);";
 
     Context context;
     using TestFunction = decltype(test);
-    context.createOrOverwriteFile({testCodeFileName, testCode, File::Type::CPP});
-    context.createOrOverwriteFile({testHeaderFileName, testHeader, File::Type::H, true});
+    context.createOrOverwriteFile({{testCodeFileName, File::Type::CPP}, testCode});
+    context.createOrOverwriteFile({{testHeaderFileName, File::Type::H, true}, testHeader});
     context.setDynamicLibraries({{"utilityFunction(int)", (void*)utilityFunction}});
     context.executeCode();
-    auto ptr = context.getFunction<TestFunction>("test(int)");
-    if (ptr) {
-        std::cout << ptr(5) << std::endl;
-    }
+//    auto ptr = context.getFunction<TestFunction>("test(int)");
+//    if (ptr) {
+//        std::cout << ptr(5) << std::endl;
+//    }
 
     MainWindow mainWindow(context);
     mainWindow.show();

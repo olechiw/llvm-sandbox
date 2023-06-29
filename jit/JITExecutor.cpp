@@ -2,13 +2,13 @@
 // Created by jolechiw on 6/28/23.
 //
 
-#include "SandboxJIT.h"
+#include "JITExecutor.h"
 
-SandboxJIT::SandboxJIT(DiagnosticsConsumer &diagnosticsConsumer) :
+JITExecutor::JITExecutor(DiagnosticsConsumer &diagnosticsConsumer) :
     _diagnosticsConsumer(diagnosticsConsumer),
     _interpreter(diagnosticsConsumer) {}
 
-std::unique_ptr<SandboxJIT::JITContext> SandboxJIT::create(CPPInterpreter::LLVMModuleAndContext llvmModuleAndContext) {
+std::unique_ptr<JITExecutor::JITContext> JITExecutor::create(CPPInterpreter::LLVMModuleAndContext llvmModuleAndContext) {
     std::unique_ptr<JITContext> out(new JITContext);
 
     auto [module, context] = std::move(llvmModuleAndContext);
@@ -71,15 +71,15 @@ std::unique_ptr<SandboxJIT::JITContext> SandboxJIT::create(CPPInterpreter::LLVMM
     return std::move(out);
 }
 
-void SandboxJIT::registerFunctionToDyLib(const std::string &symbol, void *address) {
+void JITExecutor::registerFunctionToDyLib(const std::string &symbol, void *address) {
     _registeredFunctions[symbol] = address;
 }
 
-std::unique_ptr<SandboxJIT::JITContext> SandboxJIT::execute(const FileSystem &files, const SandboxJIT::DynamicLibraries &dynamicLibraries) {
+std::unique_ptr<JITExecutor::JITContext> JITExecutor::execute(const FileSystem &files, const JITExecutor::DynamicLibraries &dynamicLibraries) {
     // TODO: Compile cpp files one by one?
     _interpreter.resetFiles();
     for (const auto &[fileName, file] : files) {
-        _interpreter.addFile(fileName, file.contents, file.type == File::Type::H);
+        _interpreter.addFile(fileName, file.contents, file.metadata.type == File::Type::H);
     }
     for (const auto &[symbol, address] : dynamicLibraries) {
         registerFunctionToDyLib(symbol, address);

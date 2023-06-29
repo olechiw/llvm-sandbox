@@ -12,7 +12,7 @@
 #include <backends/imgui_impl_sdl2.h>
 #include <TextEditor.h>
 
-#include "../Context.h"
+#include "../model/Context.h"
 
 class FileEditor {
 public:
@@ -22,11 +22,9 @@ public:
 
 private:
     struct FileTabState {
-        bool saved = true;
-        std::string name;
-        File::Type type;
+        File::Metadata metadata;
         TextEditor editor;
-        bool isReadOnly { false };
+        bool saved { true };
     };
 
     std::unordered_map<std::string, FileTabState> _fileTabs;

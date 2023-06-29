@@ -27,14 +27,9 @@ public:
         std::string message;
     };
 
-    std::vector<Diagnostic> take() { return std::move(_diagnostics); }
-    void push(const Diagnostic &diagnostic) {
-        _diagnostics.push_back(diagnostic);
-    }
-
-    void push(Diagnostic &&diagnostic) {
-        _diagnostics.emplace_back(std::move(diagnostic));
-    }
+    std::vector<Diagnostic> take();
+    void push(const Diagnostic &diagnostic);
+    void push(Diagnostic &&diagnostic);
 private:
     std::vector<Diagnostic> _diagnostics;
 };

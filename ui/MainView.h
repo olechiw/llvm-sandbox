@@ -12,8 +12,8 @@
 #include <backends/imgui_impl_sdl2.h>
 #include <TextEditor.h>
 
-#include "../DiagnosticsConsumer.h"
-#include "../Context.h"
+#include "../model/DiagnosticsConsumer.h"
+#include "../model/Context.h"
 #include "FileEditor.h"
 
 class MainView {

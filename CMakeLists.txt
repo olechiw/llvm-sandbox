@@ -22,10 +22,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(IMGUI_DIR dependencies/imgui)
 set(TEXTEDIT_DIR dependencies/ImGuiColorTextEdit)
 
-add_executable(llvm-sandbox main.cpp jit/CPPInterpreter.cpp jit/CPPInterpreter.h jit/SandboxJIT.cpp jit/SandboxJIT.h
+add_executable(llvm-sandbox main.cpp jit/CPPInterpreter.cpp jit/CPPInterpreter.h jit/JITExecutor.cpp jit/JITExecutor.h
         ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp ${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp
         ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_draw.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp
-        ${TEXTEDIT_DIR}/TextEditor.cpp ${TEXTEDIT_DIR}/LanguageDefinitions.cpp ui/MainWindow.cpp ui/MainWindow.h ui/MainView.cpp ui/MainView.h DiagnosticsConsumer.h Context.h FileSystem.h ui/FileEditor.cpp ui/FileEditor.h)
+        ${TEXTEDIT_DIR}/TextEditor.cpp ${TEXTEDIT_DIR}/LanguageDefinitions.cpp ui/MainWindow.cpp ui/MainWindow.h ui/MainView.cpp ui/MainView.h model/DiagnosticsConsumer.h model/Context.h model/FileSystem.h ui/FileEditor.cpp ui/FileEditor.h model/Context.cpp model/DiagnosticsConsumer.cpp)
 # Link against LLVM libraries
 target_include_directories(llvm-sandbox PUBLIC "${CMAKE_SOURCE_DIR}/${IMGUI_DIR}" PUBLIC "${CMAKE_SOURCE_DIR}/${TEXTEDIT_DIR}/vendor/regex/include" PUBLIC "${CMAKE_SOURCE_DIR}/${TEXTEDIT_DIR}")
 target_link_libraries(llvm-sandbox

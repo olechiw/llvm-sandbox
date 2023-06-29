@@ -23,7 +23,7 @@
 #include <clang/Basic/TargetInfo.h>
 #include <clang/CodeGen/CodeGenAction.h>
 
-#include "../DiagnosticsConsumer.h"
+#include "../model/DiagnosticsConsumer.h"
 
 
 class CPPInterpreter {

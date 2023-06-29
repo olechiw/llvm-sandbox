@@ -12,11 +12,12 @@ struct File {
     enum class Type {
         CPP, H
     };
-
-    std::string name;
+    struct Metadata {
+        std::string name;
+        Type type;
+        bool isReadOnly{false};
+    } metadata;
     std::string contents;
-    Type type;
-    bool isReadOnly { false };
 };
 using FileSystem = std::unordered_map<std::string, File>;
 

@@ -10,9 +10,8 @@ FileEditor::FileEditor(Context &context) : _context(context) {
 
     if (!fileSystemCopy.empty()) {
         for (auto &[name, file] : fileSystemCopy) {
-            _fileTabs.insert({name,
-                              {true, name, file.type, getDefaultTextEditor(), file.isReadOnly}});
-            _fileTabs[name].editor.SetReadOnly(true);
+            _fileTabs.insert({name, {file.metadata, getDefaultTextEditor()}});
+            _fileTabs[name].editor.SetReadOnly(file.metadata.isReadOnly);
             _fileTabs[name].editor.SetText(file.contents);
         }
     }
@@ -22,7 +21,7 @@ void FileEditor::render() {
     if (ImGui::BeginTabBar("Files")) {
         for (auto &[name, tabState] : _fileTabs) {
             if (ImGui::BeginTabItem(name.c_str())) {
-                if (_saveEventPending && !tabState.saved && !tabState.isReadOnly) {
+                if (_saveEventPending && !tabState.saved && !tabState.metadata.isReadOnly) {
                     saveFile(tabState);
                     tabState.saved = true;
                 }
@@ -50,5 +49,5 @@ void FileEditor::createNewFile() {
 }
 
 void FileEditor::saveFile(const FileEditor::FileTabState &stateToSave) {
-    _context.createOrOverwriteFile({stateToSave.name, stateToSave.editor.GetText(), stateToSave.type});
+    _context.createOrOverwriteFile({stateToSave.metadata, stateToSave.editor.GetText()});
 }

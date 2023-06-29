@@ -2,8 +2,8 @@
 // Created by jolechiw on 6/28/23.
 //
 
-#ifndef TESTPROJECT_SANDBOXJIT_H
-#define TESTPROJECT_SANDBOXJIT_H
+#ifndef TESTPROJECT_JITEXECUTOR_H
+#define TESTPROJECT_JITEXECUTOR_H
 
 #include <unordered_map>
 #include <string>
@@ -17,16 +17,16 @@
 #include <llvm/IR/Module.h>
 #include <llvm/Demangle/Demangle.h>
 
-#include "../DiagnosticsConsumer.h"
-#include "../FileSystem.h"
+#include "../model/DiagnosticsConsumer.h"
+#include "../model/FileSystem.h"
 #include "CPPInterpreter.h"
 
-class SandboxJIT {
+class JITExecutor {
 public:
-    explicit SandboxJIT(DiagnosticsConsumer &diagnosticsConsumer);
+    explicit JITExecutor(DiagnosticsConsumer &diagnosticsConsumer);
 
     struct JITContext {
-        friend class SandboxJIT;
+        friend class JITExecutor;
         std::unordered_map<std::string, void *> functions;
     private:
         JITContext() = default;
@@ -47,4 +47,4 @@ private:
 };
 
 
-#endif //TESTPROJECT_SANDBOXJIT_H
+#endif //TESTPROJECT_JITEXECUTOR_H
