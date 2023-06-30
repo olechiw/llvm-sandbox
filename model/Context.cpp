@@ -34,6 +34,7 @@ void Context::setDynamicLibraries(const std::unordered_map<std::string, void*> &
 }
 
 void Context::buildCode() {
+    // TODO: Build in separate thread
     _diagnosticsConsumer.push({DiagnosticsConsumer::Type::System, DiagnosticsConsumer::Level::Info, "Compiling..."});
     auto context = JITExecutor::execute(_diagnosticsConsumer, _files, _dynamicLibraries);
     if (context)

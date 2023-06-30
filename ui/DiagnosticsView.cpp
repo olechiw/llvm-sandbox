@@ -42,7 +42,6 @@ void DiagnosticsView::render() {
                 logLine += "\n\t\t" + diag.message;
             logLine += "\n";
 
-            // TODO: Test this later
             _textEditor.SetReadOnly(false);
             _textEditor.MoveBottom();
             _textEditor.InsertText(logLine);
