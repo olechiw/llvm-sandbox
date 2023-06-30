@@ -4,3 +4,6 @@
 [submodule "ImGuiColorTextEdit"]
 	path = dependencies/ImGuiColorTextEdit
 	url = git@github.com:santaclose/ImGuiColorTextEdit.git
+[submodule "dependencies/lockfree"]
+	path = dependencies/lockfree
+	url = git@github.com:boostorg/lockfree.git
