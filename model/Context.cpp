@@ -4,7 +4,7 @@
 
 #include "Context.h"
 
-Context::Context() : _diagnosticsConsumer(), _jit(_diagnosticsConsumer) {
+Context::Context() : _diagnosticsConsumer() {
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmPrinter();
 }
@@ -33,10 +33,30 @@ void Context::setDynamicLibraries(const std::unordered_map<std::string, void*> &
     _dynamicLibraries = dynamicLibraries;
 }
 
-void Context::executeCode() {
-    _jitContext = _jit.execute(_files, _dynamicLibraries);
+void Context::buildCode() {
+    _diagnosticsConsumer.push({DiagnosticsConsumer::Type::System, DiagnosticsConsumer::Level::Info, "Compiling..."});
+    auto context = JITExecutor::execute(_diagnosticsConsumer, _files, _dynamicLibraries);
+    if (context)
+        _diagnosticsConsumer.push({DiagnosticsConsumer::Type::System, DiagnosticsConsumer::Level::Info, "Compiled"});
+    else
+        _diagnosticsConsumer.push({DiagnosticsConsumer::Type::System, DiagnosticsConsumer::Level::Info, "Failed to Compile"});
+    _lockedJITContext.set(std::move(context));
+}
 
-    for (const auto &diag : _diagnosticsConsumer.take()) {
-        std::cout << diag.message << std::endl;
-    }
+DiagnosticsConsumer &Context::getDiagnosticsConsumer() {
+    return _diagnosticsConsumer;
+}
+
+std::unique_ptr<JITExecutor::JITContext> Context::takeJITContext() {
+    return _lockedJITContext.take();
+}
+
+void Context::LockedJITContext::set(std::unique_ptr<JITExecutor::JITContext> newContext) {
+    std::unique_lock<std::mutex> l(_lock);
+    _jitContext = std::move(newContext);
+}
+
+std::unique_ptr<JITExecutor::JITContext> Context::LockedJITContext::take() {
+    std::unique_lock<std::mutex> l(_lock);
+    return std::move(_jitContext);
 }

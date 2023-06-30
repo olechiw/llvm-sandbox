@@ -3,15 +3,12 @@
 //
 
 #include "DiagnosticsConsumer.h"
-
 void DiagnosticsConsumer::push(const DiagnosticsConsumer::Diagnostic &diagnostic) {
+    std::unique_lock<std::mutex> raii(_lock);
     _diagnostics.push_back(diagnostic);
 }
 
-void DiagnosticsConsumer::push(DiagnosticsConsumer::Diagnostic &&diagnostic) {
-    _diagnostics.emplace_back(std::move(diagnostic));
-}
-
 std::vector<DiagnosticsConsumer::Diagnostic> DiagnosticsConsumer::take() {
+    std::unique_lock<std::mutex> raii(_lock);
     return std::move(_diagnostics);
 }

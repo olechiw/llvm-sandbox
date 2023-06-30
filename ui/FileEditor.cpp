@@ -21,13 +21,19 @@ FileEditor::FileEditor(Context &context) : _context(context) {
 void FileEditor::render() {
     if (ImGui::BeginTabBar("Files")) {
         for (auto &[name, tabState] : _fileTabs) {
-            if (ImGui::BeginTabItem(name.c_str())) {
+            if (tabState.editor.IsTextChanged() && tabState.hasRenderedOnce) {
+                tabState.saved = false;
+            }
+            ImGuiTabItemFlags flags = tabState.saved ? 0 : ImGuiTabItemFlags_UnsavedDocument;
+            if (ImGui::BeginTabItem(name.c_str(), nullptr, flags)) {
                 // TODO: pin readonly tabs to the left
                 if (_saveEventPending && !tabState.saved && !tabState.metadata.isReadOnly) {
                     saveFile(tabState);
+                    _context.getDiagnosticsConsumer().push({DiagnosticsConsumer::Type::System, DiagnosticsConsumer::Level::Debug, "Saved" + name});
                     tabState.saved = true;
                 }
                 tabState.editor.Render(name.c_str());
+                tabState.hasRenderedOnce = true;
                 ImGui::EndTabItem();
             }
         }

@@ -23,8 +23,6 @@
 
 class JITExecutor {
 public:
-    explicit JITExecutor(DiagnosticsConsumer &diagnosticsConsumer);
-
     struct JITContext {
         friend class JITExecutor;
         std::unordered_map<std::string, void *> functions;
@@ -35,15 +33,9 @@ public:
 
     using DynamicLibraries = std::unordered_map<std::string, void*>;
     using FileSystem = std::unordered_map<std::string, File>;
-    std::unique_ptr<JITContext> execute(const FileSystem &files, const DynamicLibraries &dynamicLibraries = DynamicLibraries());
-
+    static std::unique_ptr<JITContext> execute(DiagnosticsConsumer &diagnosticsConsumer, const FileSystem &files, const DynamicLibraries &dynamicLibraries = DynamicLibraries());
 private:
-    std::unique_ptr<JITContext> create(CPPInterpreter::LLVMModuleAndContext llvmModuleAndContext);
-    void registerFunctionToDyLib(const std::string &symbol, void *address);
-
-    std::unordered_map<std::string, void*> _registeredFunctions;
-    DiagnosticsConsumer &_diagnosticsConsumer;
-    CPPInterpreter _interpreter;
+    static std::unique_ptr<JITContext> create(DiagnosticsConsumer &diagnosticsConsumer, CPPInterpreter::LLVMModuleAndContext llvmModuleAndContext, const DynamicLibraries &dynamicLibraries);
 };
 
 

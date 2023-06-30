@@ -38,11 +38,7 @@ int main() {
     context.createOrOverwriteFile({{testCodeFileName, File::Type::CPP}, testCode});
     context.createOrOverwriteFile({{testHeaderFileName, File::Type::H, true}, testHeader});
     context.setDynamicLibraries({{"utilityFunction(int)", (void*)utilityFunction}});
-    context.executeCode();
-//    auto ptr = context.getFunction<TestFunction>("test(int)");
-//    if (ptr) {
-//        std::cout << ptr(5) << std::endl;
-//    }
+    context.buildCode();
 
     MainWindow mainWindow(context);
     mainWindow.show();

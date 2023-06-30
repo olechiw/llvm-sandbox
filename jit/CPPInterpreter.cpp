@@ -26,8 +26,7 @@ CPPInterpreter::LLVMModuleAndContext CPPInterpreter::buildModule() {
     llvm::raw_string_ostream errorStream(errorOutput);
     auto diagPrinter = new clang::TextDiagnosticPrinter(errorStream,
                                                         diagOpts.get());
-    auto diagEngine =
-            llvm::makeIntrusiveRefCnt<clang::DiagnosticsEngine>(diagIDs,
+    auto diagEngine = new clang::DiagnosticsEngine(diagIDs,
                                                                 diagOpts,
                                                                 diagPrinter);
 
@@ -45,7 +44,7 @@ CPPInterpreter::LLVMModuleAndContext CPPInterpreter::buildModule() {
 
     clang::CompilerInstance compilerInstance;
     compilerInstance.setInvocation(compilerInvocation);
-    compilerInstance.createDiagnostics();
+    compilerInstance.setDiagnostics(diagEngine);
 
     compilerInstance.setFileManager(new clang::FileManager(clang::FileSystemOptions{}, _fs));
     compilerInstance.createSourceManager(compilerInstance.getFileManager());
@@ -57,6 +56,7 @@ CPPInterpreter::LLVMModuleAndContext CPPInterpreter::buildModule() {
 
     auto action = std::make_shared<clang::EmitLLVMOnlyAction>();
     if (!compilerInstance.ExecuteAction(*action)) {
+        errorOutput = errorStream.str();
         _diagnosticsConsumer.push({DiagnosticsConsumer::Type::User,
                                    DiagnosticsConsumer::Level::Error,
                                    "Failed to Compile",

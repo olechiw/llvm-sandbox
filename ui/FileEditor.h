@@ -25,6 +25,7 @@ private:
         File::Metadata metadata;
         TextEditor editor;
         bool saved { true };
+        bool hasRenderedOnce { false };
     };
 
     std::unordered_map<std::string, FileTabState> _fileTabs;

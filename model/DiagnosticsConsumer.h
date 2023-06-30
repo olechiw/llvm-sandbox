@@ -7,18 +7,17 @@
 
 #include <vector>
 #include <string>
+#include <mutex>
 
 class DiagnosticsConsumer {
 public:
     DiagnosticsConsumer() = default;
-    DiagnosticsConsumer(DiagnosticsConsumer &&) = default;
-    DiagnosticsConsumer(const DiagnosticsConsumer &) = delete;
 
     enum class Type {
         System, User
     };
     enum class Level {
-        Error, Warning, Info
+        Error, Warning, Info, Debug
     };
     struct Diagnostic {
         Type type;
@@ -29,9 +28,9 @@ public:
 
     std::vector<Diagnostic> take();
     void push(const Diagnostic &diagnostic);
-    void push(Diagnostic &&diagnostic);
 private:
     std::vector<Diagnostic> _diagnostics;
+    std::mutex _lock;
 };
 
 

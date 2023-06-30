@@ -4,11 +4,7 @@
 
 #include "JITExecutor.h"
 
-JITExecutor::JITExecutor(DiagnosticsConsumer &diagnosticsConsumer) :
-    _diagnosticsConsumer(diagnosticsConsumer),
-    _interpreter(diagnosticsConsumer) {}
-
-std::unique_ptr<JITExecutor::JITContext> JITExecutor::create(CPPInterpreter::LLVMModuleAndContext llvmModuleAndContext) {
+std::unique_ptr<JITExecutor::JITContext> JITExecutor::create(DiagnosticsConsumer &diagnosticsConsumer, CPPInterpreter::LLVMModuleAndContext llvmModuleAndContext, const JITExecutor::DynamicLibraries &dynamicLibraries) {
     std::unique_ptr<JITContext> out(new JITContext);
 
     auto [module, context] = std::move(llvmModuleAndContext);
@@ -22,7 +18,7 @@ std::unique_ptr<JITExecutor::JITContext> JITExecutor::create(CPPInterpreter::LLV
     auto jitEngineExpected = llvm::orc::LLJITBuilder().create();
 
     if (!jitEngineExpected) {
-        _diagnosticsConsumer.push({DiagnosticsConsumer::Type::System,
+        diagnosticsConsumer.push({DiagnosticsConsumer::Type::System,
                                    DiagnosticsConsumer::Level::Error,
                                    "Failed To Construct JIT Engine",
                                    toString(jitEngineExpected.takeError())});
@@ -32,7 +28,7 @@ std::unique_ptr<JITExecutor::JITContext> JITExecutor::create(CPPInterpreter::LLV
     auto &dyLib = jitEngine->getMainJITDylib();
     auto symbolPool = jitEngine->getExecutionSession().getSymbolStringPool();
     llvm::DenseMap<llvm::orc::SymbolStringPtr, llvm::JITEvaluatedSymbol> symbolsToRegister;
-    for (const auto &[symbolName, addr] : _registeredFunctions) {
+    for (const auto &[symbolName, addr] : dynamicLibraries) {
         // Only intern the symbols that are used
         if (mangledMapping.find(symbolName) == mangledMapping.end())
             continue;
@@ -42,7 +38,7 @@ std::unique_ptr<JITExecutor::JITContext> JITExecutor::create(CPPInterpreter::LLV
     auto err = dyLib.define(llvm::orc::absoluteSymbols(symbolsToRegister));
 
     if (err) {
-        _diagnosticsConsumer.push({DiagnosticsConsumer::Type::System,
+        diagnosticsConsumer.push({DiagnosticsConsumer::Type::System,
                                    DiagnosticsConsumer::Level::Error,
                                    "Failed to define system dynamic libraries",
                                    toString(std::move(err))});
@@ -50,7 +46,7 @@ std::unique_ptr<JITExecutor::JITContext> JITExecutor::create(CPPInterpreter::LLV
     }
     err = jitEngine->addIRModule(llvm::orc::ThreadSafeModule(std::move(module), std::move(context)));
     if (err) {
-        _diagnosticsConsumer.push({DiagnosticsConsumer::Type::User,
+        diagnosticsConsumer.push({DiagnosticsConsumer::Type::User,
                                    DiagnosticsConsumer::Level::Error,
                                    "Failed to JIT user's module",
                                    toString(std::move(err))});
@@ -71,18 +67,15 @@ std::unique_ptr<JITExecutor::JITContext> JITExecutor::create(CPPInterpreter::LLV
     return std::move(out);
 }
 
-void JITExecutor::registerFunctionToDyLib(const std::string &symbol, void *address) {
-    _registeredFunctions[symbol] = address;
-}
-
-std::unique_ptr<JITExecutor::JITContext> JITExecutor::execute(const FileSystem &files, const JITExecutor::DynamicLibraries &dynamicLibraries) {
+std::unique_ptr<JITExecutor::JITContext> JITExecutor::execute(DiagnosticsConsumer &diagnosticsConsumer, const FileSystem &files, const JITExecutor::DynamicLibraries &dynamicLibraries) {
     // TODO: Compile cpp files one by one?
-    _interpreter.resetFiles();
+    CPPInterpreter interpreter(diagnosticsConsumer);
     for (const auto &[fileName, file] : files) {
-        _interpreter.addFile(fileName, file.contents, file.metadata.type == File::Type::H);
+        interpreter.addFile(fileName, file.contents, file.metadata.type == File::Type::H);
     }
-    for (const auto &[symbol, address] : dynamicLibraries) {
-        registerFunctionToDyLib(symbol, address);
+    auto [context, module] = interpreter.buildModule();
+    if (!context || !module) {
+        return nullptr;
     }
-    return create(_interpreter.buildModule());
+    return create(diagnosticsConsumer, std::make_tuple(std::move(context), std::move(module)), dynamicLibraries);
 }

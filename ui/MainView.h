@@ -15,6 +15,7 @@
 #include "../model/DiagnosticsConsumer.h"
 #include "../model/Context.h"
 #include "FileEditor.h"
+#include "DiagnosticsView.h"
 
 class MainView {
 public:
@@ -22,10 +23,8 @@ public:
     void render();
     bool isOpen() const { return _is_open; }
 private:
-    // EditorView
-    // OutputView
-    // will files have a model?
     FileEditor _fileEditor;
+    DiagnosticsView _diagnosticsView;
     Context &_context;
     bool _is_open { true };
 };

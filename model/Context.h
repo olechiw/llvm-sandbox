@@ -19,24 +19,23 @@ public:
     void createOrOverwriteFile(const File &file);
 
     void setDynamicLibraries(const std::unordered_map<std::string, void *> &dynamicLibraries);
-    void executeCode();
+    void buildCode();
 
-    template <typename T = void*>
-    T *getFunction(const std::string &functionName) {
-        if (_jitContext)
-            return (T*)_jitContext->functions[functionName];
-        _diagnosticsConsumer.push({DiagnosticsConsumer::Type::User,
-                                   DiagnosticsConsumer::Level::Warning,
-                                   "Failed to resolve function",
-                                   functionName});
-        return nullptr;
-    }
+    std::unique_ptr<JITExecutor::JITContext> takeJITContext();
+
+    DiagnosticsConsumer &getDiagnosticsConsumer();
 private:
-    JITExecutor _jit;
     std::unordered_map<std::string, void*> _dynamicLibraries;
     DiagnosticsConsumer _diagnosticsConsumer;
     FileSystem _files;
-    std::unique_ptr<JITExecutor::JITContext> _jitContext;
+    struct LockedJITContext {
+        void set(std::unique_ptr<JITExecutor::JITContext> newContext);
+
+        std::unique_ptr<JITExecutor::JITContext> take();
+    private:
+        std::mutex _lock;
+        std::unique_ptr<JITExecutor::JITContext> _jitContext;
+    } _lockedJITContext;
 };
 
 
