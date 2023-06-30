@@ -22,6 +22,7 @@ void FileEditor::render() {
     if (ImGui::BeginTabBar("Files")) {
         for (auto &[name, tabState] : _fileTabs) {
             if (ImGui::BeginTabItem(name.c_str())) {
+                // TODO: pin readonly tabs to the left
                 if (_saveEventPending && !tabState.saved && !tabState.metadata.isReadOnly) {
                     saveFile(tabState);
                     tabState.saved = true;
