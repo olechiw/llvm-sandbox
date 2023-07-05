@@ -35,8 +35,11 @@ void MainView::render() {
         _fileEditor.saveEvent();
     }
     ImGui::SameLine();
-    if (ImGui::Button(ICON_FA_PLAY)) {
+    if (ImGui::Button(ICON_FA_HAMMER)) {
         _context.buildCode();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button(ICON_FA_PLAY)) {
     }
 
 
