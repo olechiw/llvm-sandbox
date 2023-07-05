@@ -12,11 +12,12 @@
 #include <backends/imgui_impl_sdl2.h>
 
 #include "MainView.h"
+#include "../CodeActions.h"
 
 class MainWindow {
 public:
     static constexpr float fontSize = 13.f;
-    MainWindow(Context &context);
+    explicit MainWindow(FileSystem &fileSystemStore, Diagnostics &diagnostics, CodeActions &codeActions);
     ~MainWindow();
     void show();
 private:

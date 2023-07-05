@@ -6,7 +6,7 @@
 
 #include "fonts/Loader.h"
 
-MainWindow::MainWindow(Context &context) : _mainView(context) {
+MainWindow::MainWindow(FileSystem &fileSystemStore, Diagnostics &diagnostics, CodeActions &actions) : _mainView(fileSystemStore, diagnostics, actions) {
     // Setup SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
     {

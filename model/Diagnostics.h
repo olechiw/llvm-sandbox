@@ -2,16 +2,16 @@
 // Created by jolechiw on 6/28/23.
 //
 
-#ifndef TESTPROJECT_DIAGNOSTICSCONSUMER_H
-#define TESTPROJECT_DIAGNOSTICSCONSUMER_H
+#ifndef TESTPROJECT_DIAGNOSTICS_H
+#define TESTPROJECT_DIAGNOSTICS_H
 
 #include <vector>
 #include <string>
 #include <mutex>
 
-class DiagnosticsConsumer {
+class Diagnostics {
 public:
-    DiagnosticsConsumer() = default;
+    Diagnostics() = default;
 
     enum class Type {
         System, User
@@ -34,4 +34,4 @@ private:
 };
 
 
-#endif //TESTPROJECT_DIAGNOSTICSCONSUMER_H
+#endif //TESTPROJECT_DIAGNOSTICS_H

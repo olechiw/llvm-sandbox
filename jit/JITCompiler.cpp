@@ -2,10 +2,10 @@
 // Created by jolechiw on 6/28/23.
 //
 
-#include "JITExecutor.h"
+#include "JITCompiler.h"
 
-std::unique_ptr<JITExecutor::JITContext> JITExecutor::create(DiagnosticsConsumer &diagnosticsConsumer, CPPInterpreter::LLVMModuleAndContext llvmModuleAndContext, const JITExecutor::DynamicLibraries &dynamicLibraries) {
-    std::unique_ptr<JITContext> out(new JITContext);
+std::unique_ptr<JITCompiler::CompiledCode> JITCompiler::create(Diagnostics &diagnostics, CPPInterpreter::LLVMModuleAndContext llvmModuleAndContext, const JITCompiler::DynamicLibraries &dynamicLibraries) {
+    std::unique_ptr<CompiledCode> out(new CompiledCode);
 
     auto [module, context] = std::move(llvmModuleAndContext);
 
@@ -18,10 +18,10 @@ std::unique_ptr<JITExecutor::JITContext> JITExecutor::create(DiagnosticsConsumer
     auto jitEngineExpected = llvm::orc::LLJITBuilder().create();
 
     if (!jitEngineExpected) {
-        diagnosticsConsumer.push({DiagnosticsConsumer::Type::System,
-                                   DiagnosticsConsumer::Level::Error,
-                                   "Failed To Construct JIT Engine",
-                                   toString(jitEngineExpected.takeError())});
+        diagnostics.push({Diagnostics::Type::System,
+                                  Diagnostics::Level::Error,
+                                  "Failed To Construct JIT Engine",
+                                  toString(jitEngineExpected.takeError())});
         return nullptr;
     }
     auto jitEngine = std::move(jitEngineExpected.get());
@@ -38,18 +38,18 @@ std::unique_ptr<JITExecutor::JITContext> JITExecutor::create(DiagnosticsConsumer
     auto err = dyLib.define(llvm::orc::absoluteSymbols(symbolsToRegister));
 
     if (err) {
-        diagnosticsConsumer.push({DiagnosticsConsumer::Type::System,
-                                   DiagnosticsConsumer::Level::Error,
-                                   "Failed to define system dynamic libraries",
-                                   toString(std::move(err))});
+        diagnostics.push({Diagnostics::Type::System,
+                                  Diagnostics::Level::Error,
+                                  "Failed to define system dynamic libraries",
+                                  toString(std::move(err))});
         return nullptr;
     }
     err = jitEngine->addIRModule(llvm::orc::ThreadSafeModule(std::move(module), std::move(context)));
     if (err) {
-        diagnosticsConsumer.push({DiagnosticsConsumer::Type::User,
-                                   DiagnosticsConsumer::Level::Error,
-                                   "Failed to JIT user's module",
-                                   toString(std::move(err))});
+        diagnostics.push({Diagnostics::Type::User,
+                                  Diagnostics::Level::Error,
+                                  "Failed to JIT user's module",
+                                  toString(std::move(err))});
         return nullptr;
     }
 
@@ -67,15 +67,15 @@ std::unique_ptr<JITExecutor::JITContext> JITExecutor::create(DiagnosticsConsumer
     return std::move(out);
 }
 
-std::unique_ptr<JITExecutor::JITContext> JITExecutor::execute(DiagnosticsConsumer &diagnosticsConsumer, const FileSystem &files, const JITExecutor::DynamicLibraries &dynamicLibraries) {
+std::unique_ptr<JITCompiler::CompiledCode> JITCompiler::compile(Diagnostics &diagnostics, const FileSystem &files, const DynamicLibraries &dynamicLibraries) {
     // TODO: Compile cpp files one by one?
-    CPPInterpreter interpreter(diagnosticsConsumer);
-    for (const auto &[fileName, file] : files) {
+    CPPInterpreter interpreter(diagnostics);
+    for (const auto &[fileName, file] : files.getFiles()) {
         interpreter.addFile(fileName, file.contents, file.metadata.type == File::Type::H);
     }
     auto [context, module] = interpreter.buildModule();
     if (!context || !module) {
         return nullptr;
     }
-    return create(diagnosticsConsumer, std::make_tuple(std::move(context), std::move(module)), dynamicLibraries);
+    return create(diagnostics, std::make_tuple(std::move(context), std::move(module)), dynamicLibraries);
 }

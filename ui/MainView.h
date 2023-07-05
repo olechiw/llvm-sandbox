@@ -12,20 +12,22 @@
 #include <backends/imgui_impl_sdl2.h>
 #include <TextEditor.h>
 
-#include "../model/DiagnosticsConsumer.h"
-#include "../model/Context.h"
-#include "FileEditor.h"
+#include "../model/Diagnostics.h"
+#include "../model/FileSystem.h"
+#include "../CodeActions.h"
+#include "FileEditorView.h"
 #include "DiagnosticsView.h"
 
 class MainView {
 public:
-    MainView(Context &context);
+    MainView(FileSystem &fileSystemStore, Diagnostics &diagnostics, CodeActions &actions);
     void render();
     bool isOpen() const { return _is_open; }
 private:
-    FileEditor _fileEditor;
+    FileEditorView _fileEditor;
     DiagnosticsView _diagnosticsView;
-    Context &_context;
+    Diagnostics &_diagnostics;
+    CodeActions &_codeActions;
     bool _is_open { true };
 };
 

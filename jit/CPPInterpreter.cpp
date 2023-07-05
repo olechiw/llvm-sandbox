@@ -4,7 +4,7 @@
 
 #include "CPPInterpreter.h"
 
-CPPInterpreter::CPPInterpreter(DiagnosticsConsumer &diagnosticsConsumer, const std::vector<std::string> &additionalCliArguments) : _diagnosticsConsumer(diagnosticsConsumer), _additionalCliArguments(additionalCliArguments) {
+CPPInterpreter::CPPInterpreter(Diagnostics &diagnostics, const std::vector<std::string> &additionalCliArguments) : _diagnostics(diagnostics), _additionalCliArguments(additionalCliArguments) {
     _fs = llvm::makeIntrusiveRefCnt<llvm::vfs::InMemoryFileSystem>();
 }
 
@@ -57,8 +57,8 @@ CPPInterpreter::LLVMModuleAndContext CPPInterpreter::buildModule() {
     auto action = std::make_shared<clang::EmitLLVMOnlyAction>();
     if (!compilerInstance.ExecuteAction(*action)) {
         errorOutput = errorStream.str();
-        _diagnosticsConsumer.push({DiagnosticsConsumer::Type::User,
-                                   DiagnosticsConsumer::Level::Error,
+        _diagnostics.push({Diagnostics::Type::User,
+                                   Diagnostics::Level::Error,
                                    "Failed to Compile",
                                    errorOutput});
         return std::make_tuple(nullptr, nullptr);

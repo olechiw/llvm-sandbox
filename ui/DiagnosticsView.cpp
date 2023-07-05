@@ -4,36 +4,36 @@
 
 #include "DiagnosticsView.h"
 
-DiagnosticsView::DiagnosticsView(Context &context) : _context(context) {
+DiagnosticsView::DiagnosticsView(Diagnostics &diagnostics) : _diagnostics(diagnostics) {
     _textEditor.SetReadOnly(true);
     _textEditor.SetText("");
 }
 
 void DiagnosticsView::render() {
-    auto diagnostics = _context.getDiagnosticsConsumer().take();
+    auto diagnostics = _diagnostics.take();
 
     if (!diagnostics.empty()) {
         for (const auto &diag : diagnostics) {
             std::string logLine;
             switch (diag.type) {
-                case DiagnosticsConsumer::Type::System:
+                case Diagnostics::Type::System:
                     logLine += "[SYS]";
                     break;
-                case DiagnosticsConsumer::Type::User:
+                case Diagnostics::Type::User:
                     logLine += "[USR]";
                     break;
             }
             switch (diag.level) {
-                case DiagnosticsConsumer::Level::Error:
+                case Diagnostics::Level::Error:
                     logLine += "[ERR]";
                     break;
-                case DiagnosticsConsumer::Level::Warning:
+                case Diagnostics::Level::Warning:
                     logLine += "[WRN]";
                     break;
-                case DiagnosticsConsumer::Level::Info:
+                case Diagnostics::Level::Info:
                     logLine += "[INF]";
                     break;
-                case DiagnosticsConsumer::Level::Debug:
+                case Diagnostics::Level::Debug:
                     logLine += "[DBG]";
                     break;
             }

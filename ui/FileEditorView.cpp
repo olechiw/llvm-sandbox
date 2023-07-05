@@ -2,12 +2,13 @@
 // Created by jolechiw on 6/28/23.
 //
 
-#include "FileEditor.h"
+#include "FileEditorView.h"
 
 #include "fonts/IconsFontAwesome5.h"
+#include "../model/FileSystem.h"
 
-FileEditor::FileEditor(Context &context) : _context(context) {
-    auto fileSystemCopy = _context.getFiles();
+FileEditorView::FileEditorView(FileSystem &fileSystem, Diagnostics &diagnostics) : _fileSystem(fileSystem), _diagnostics(diagnostics) {
+    auto fileSystemCopy = _fileSystem.getFiles();
 
     if (!fileSystemCopy.empty()) {
         for (auto &[name, file] : fileSystemCopy) {
@@ -18,7 +19,7 @@ FileEditor::FileEditor(Context &context) : _context(context) {
     }
 }
 
-void FileEditor::render() {
+void FileEditorView::render() {
     if (ImGui::BeginTabBar("Files")) {
         for (auto &[name, tabState] : _fileTabs) {
             if (tabState.editor.IsTextChanged() && tabState.hasRenderedOnce) {
@@ -29,7 +30,7 @@ void FileEditor::render() {
                 // TODO: pin readonly tabs to the left
                 if (_saveEventPending && !tabState.saved && !tabState.metadata.isReadOnly) {
                     saveFile(tabState);
-                    _context.getDiagnosticsConsumer().push({DiagnosticsConsumer::Type::System, DiagnosticsConsumer::Level::Debug, "Saved" + name});
+                    _diagnostics.push({Diagnostics::Type::System, Diagnostics::Level::Debug, "Saved" + name});
                     tabState.saved = true;
                 }
                 tabState.editor.Render(name.c_str());
@@ -46,20 +47,20 @@ void FileEditor::render() {
     _saveEventPending = false;
 }
 
-TextEditor FileEditor::getDefaultTextEditor() {
+TextEditor FileEditorView::getDefaultTextEditor() {
     TextEditor out;
     out.SetLanguageDefinition(TextEditor::LanguageDefinition::CPlusPlus());
     return out;
 }
 
-void FileEditor::createNewFile() {
+void FileEditorView::createNewFile() {
 
 }
 
-void FileEditor::saveEvent() {
+void FileEditorView::saveEvent() {
     _saveEventPending = true;
 }
 
-void FileEditor::saveFile(const FileEditor::FileTabState &stateToSave) {
-    _context.createOrOverwriteFile({stateToSave.metadata, stateToSave.editor.GetText()});
+void FileEditorView::saveFile(const FileEditorView::FileTabState &stateToSave) {
+    _fileSystem.createOrOverwriteFile({stateToSave.metadata, stateToSave.editor.GetText()});
 }

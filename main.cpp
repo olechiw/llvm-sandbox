@@ -1,8 +1,10 @@
 #include <iostream>
 
 #include "jit/CPPInterpreter.h"
-#include "jit/JITExecutor.h"
+#include "jit/JITCompiler.h"
 #include "ui/MainWindow.h"
+#include "CodeActions.h"
+#include "context/ExecutionContexts.h"
 
 #include <imgui.h>
 #include <backends/imgui_impl_opengl3.h>
@@ -27,20 +29,16 @@ void utilityFunction(int x) {
 int test(int) { return 0; }
 
 int main() {
-    constexpr auto testCodeFileName = "test.cpp";
-    constexpr auto testCode = "#include \"system_headers.h\"\nclass A {\npublic:\n\tconst static int x=5;\n};\nint test(int y) {\n\tutilityFunction(3);\n\treturn 2+A::x+y;\n}";
-
-    constexpr auto testHeaderFileName = "system_headers.h";
-    constexpr auto testHeader = "extern void utilityFunction(int);";
-
-    Context context;
-    using TestFunction = decltype(test);
-    context.createOrOverwriteFile({{testCodeFileName, File::Type::CPP}, testCode});
-    context.createOrOverwriteFile({{testHeaderFileName, File::Type::H, true}, testHeader});
-    context.setDynamicLibraries({{"utilityFunction(int)", (void*)utilityFunction}});
-    context.buildCode();
-
-    MainWindow mainWindow(context);
+    FileSystem fs;
+    Diagnostics diagnostics;
+    CodeActions codeActions(fs, diagnostics);
+    for (const auto &[name, contents] : ExecutionContexts::getHelloWorld().starterFiles) {
+        fs.createOrOverwriteFile({{name, File::Type::CPP, false}, contents});
+    }
+    for (const auto &[name, contents] : ExecutionContexts::getHelloWorld().helperFiles) {
+        fs.createOrOverwriteFile({{name, File::Type::H, true}, contents});
+    }
+    MainWindow mainWindow(fs, diagnostics, codeActions);
     mainWindow.show();
 }
 

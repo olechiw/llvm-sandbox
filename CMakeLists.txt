@@ -21,10 +21,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(IMGUI_DIR dependencies/imgui)
 set(TEXTEDIT_DIR dependencies/ImGuiColorTextEdit)
-add_executable(llvm-sandbox main.cpp jit/CPPInterpreter.cpp jit/CPPInterpreter.h jit/JITExecutor.cpp jit/JITExecutor.h
+add_executable(llvm-sandbox main.cpp jit/CPPInterpreter.cpp jit/CPPInterpreter.h jit/JITCompiler.cpp jit/JITCompiler.h
         ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp ${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp
         ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_draw.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp
-        ${TEXTEDIT_DIR}/TextEditor.cpp ${TEXTEDIT_DIR}/LanguageDefinitions.cpp ui/MainWindow.cpp ui/MainWindow.h ui/MainView.cpp ui/MainView.h model/DiagnosticsConsumer.h model/Context.h model/FileSystem.h ui/FileEditor.cpp ui/FileEditor.h model/Context.cpp model/DiagnosticsConsumer.cpp ui/fonts/Loader.h ui/fonts/IconsFontAwesome5.h ui/fonts/IconsFontAwesome5.h_fa-regular-400.ttf.h ui/fonts/IconsFontAwesome5.h_fa-solid-900.ttf.h ui/DiagnosticsView.cpp ui/DiagnosticsView.h)
+        ${TEXTEDIT_DIR}/TextEditor.cpp ${TEXTEDIT_DIR}/LanguageDefinitions.cpp ui/MainWindow.cpp ui/MainWindow.h ui/MainView.cpp ui/MainView.h model/Diagnostics.h model/FileSystem.h ui/FileEditorView.cpp ui/FileEditorView.h model/Diagnostics.cpp ui/fonts/Loader.h ui/fonts/IconsFontAwesome5.h ui/fonts/IconsFontAwesome5.h_fa-regular-400.ttf.h ui/fonts/IconsFontAwesome5.h_fa-solid-900.ttf.h ui/DiagnosticsView.cpp ui/DiagnosticsView.h model/FileSystem.cpp CodeActions.cpp CodeActions.h context/ExecutionContexts.cpp context/ExecutionContexts.h)
 target_include_directories(llvm-sandbox PUBLIC "${CMAKE_SOURCE_DIR}/${IMGUI_DIR}"
         PUBLIC "${CMAKE_SOURCE_DIR}/${TEXTEDIT_DIR}/vendor/regex/include"
         PUBLIC "${CMAKE_SOURCE_DIR}/dependencies/lockfree/include"

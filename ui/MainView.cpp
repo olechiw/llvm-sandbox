@@ -5,8 +5,14 @@
 #include "MainView.h"
 
 #include "fonts/IconsFontAwesome5.h"
+#include "../context/ExecutionContexts.h"
+#include "../CodeActions.h"
 
-MainView::MainView(Context &context) : _context(context), _fileEditor(context), _diagnosticsView(context) {
+MainView::MainView(FileSystem &fileSystemStore, Diagnostics &diagnostics, CodeActions &actions) :
+    _codeActions(actions),
+    _diagnostics(diagnostics),
+    _diagnosticsView(diagnostics),
+    _fileEditor(fileSystemStore, diagnostics) {
 }
 
 void MainView::render() {
@@ -31,15 +37,16 @@ void MainView::render() {
     ImGui::Button(ICON_FA_FILE);
     ImGui::SameLine();
     if (ImGui::Button(ICON_FA_SAVE)) {
-        _context.getDiagnosticsConsumer().push({DiagnosticsConsumer::Type::System, DiagnosticsConsumer::Level::Debug, "Save Clicked"});
+        _diagnostics.push({Diagnostics::Type::System, Diagnostics::Level::Debug, "Save Clicked"});
         _fileEditor.saveEvent();
     }
     ImGui::SameLine();
     if (ImGui::Button(ICON_FA_HAMMER)) {
-        _context.buildCode();
+        _codeActions.build(ExecutionContexts::getHelloWorld().dynamicLibraries);
     }
     ImGui::SameLine();
     if (ImGui::Button(ICON_FA_PLAY)) {
+        _codeActions.runBuiltCode();
     }
 
 

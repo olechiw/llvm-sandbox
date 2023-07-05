@@ -2,8 +2,8 @@
 // Created by jolechiw on 6/28/23.
 //
 
-#ifndef TESTPROJECT_FILEEDITOR_H
-#define TESTPROJECT_FILEEDITOR_H
+#ifndef TESTPROJECT_FILEEDITORVIEW_H
+#define TESTPROJECT_FILEEDITORVIEW_H
 
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -12,11 +12,12 @@
 #include <backends/imgui_impl_sdl2.h>
 #include <TextEditor.h>
 
-#include "../model/Context.h"
+#include "../model/FileSystem.h"
+#include "../model/Diagnostics.h"
 
-class FileEditor {
+class FileEditorView {
 public:
-    explicit FileEditor(Context &context);
+    explicit FileEditorView(FileSystem &fileSystem, Diagnostics &diagnostics);
     void render();
     void saveEvent();
 
@@ -29,13 +30,14 @@ private:
     };
 
     std::unordered_map<std::string, FileTabState> _fileTabs;
-    Context &_context;
+    FileSystem &_fileSystem;
+    Diagnostics &_diagnostics;
     bool _saveEventPending { false };
 
-    TextEditor getDefaultTextEditor();
+    static TextEditor getDefaultTextEditor();
     void createNewFile();
     void saveFile(const FileTabState &stateToSave);
 };
 
 
-#endif //TESTPROJECT_FILEEDITOR_H
+#endif //TESTPROJECT_FILEEDITORVIEW_H

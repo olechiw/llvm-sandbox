@@ -7,15 +7,15 @@
 
 #include <TextEditor.h>
 
-#include "../model/Context.h"
+#include "../model/Diagnostics.h"
 
 class DiagnosticsView {
 public:
-    explicit DiagnosticsView(Context &context);
+    explicit DiagnosticsView(Diagnostics &diagnostics);
 
     void render();
 private:
-    Context &_context;
+    Diagnostics &_diagnostics;
     TextEditor _textEditor {};
 };
 

@@ -19,7 +19,18 @@ struct File {
     } metadata;
     std::string contents;
 };
-using FileSystem = std::unordered_map<std::string, File>;
+using Files = std::unordered_map<std::string, File>;
+
+class FileSystem {
+public:
+    const Files &getFiles() const;
+    void deleteFile(const std::string &name);
+    void resetFiles();
+    void setFiles(const Files &fs);
+    void createOrOverwriteFile(const File &file);
+private:
+    Files _files;
+};
 
 
 #endif //TESTPROJECT_FILESYSTEM_H
