@@ -4,7 +4,7 @@
 #include "jit/JITCompiler.h"
 #include "ui/MainWindow.h"
 #include "CodeActions.h"
-#include "context/ExecutionContexts.h"
+#include "context/ExecutionContext.h"
 
 #include <imgui.h>
 #include <backends/imgui_impl_opengl3.h>
@@ -22,24 +22,35 @@
  */
 
 
-void utilityFunction(int x) {
-    std::cout << "HEY " << x << std::endl;
-}
-
-int test(int) { return 0; }
-
 int main() {
-    FileSystem fs;
     Diagnostics diagnostics;
-    CodeActions codeActions(fs, diagnostics);
-    for (const auto &[name, contents] : ExecutionContexts::getHelloWorld().starterFiles) {
-        fs.createOrOverwriteFile({{name, File::Type::CPP, false}, contents});
-    }
-    for (const auto &[name, contents] : ExecutionContexts::getHelloWorld().helperFiles) {
-        fs.createOrOverwriteFile({{name, File::Type::H, true}, contents});
-    }
-    // TODO: decouple mainview from mainwindow?
-    MainWindow mainWindow(fs, diagnostics, codeActions);
+    HelloWorldCodeActions codeActions(diagnostics);
+
+
+    FileEditorView fileEditorView(codeActions.getFileSystem(), diagnostics);
+    DiagnosticsView diagnosticsView(diagnostics);
+    MainView mainView(diagnostics, fileEditorView, diagnosticsView);
+
+    auto processEvents = [&](MainView &mainView) {
+        if (mainView.save()) {
+            fileEditorView.saveCurrentFile();
+        }
+        if (mainView.build()) {
+            codeActions.build();
+        }
+        if (mainView.run()) {
+            codeActions.runBuiltCode();
+        }
+        for (const auto &[fileName, file] : fileEditorView.takeChangedFiles()) {
+            codeActions.getFileSystem().createOrOverwriteFile(file);
+        }
+        for (const auto &line : codeActions.takeOutput()) {
+            std::cout << line;
+        }
+    };
+
+
+    MainWindow<decltype(processEvents)> mainWindow(mainView, diagnostics, processEvents);
     mainWindow.show();
 }
 

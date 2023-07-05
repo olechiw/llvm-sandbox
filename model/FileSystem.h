@@ -23,6 +23,7 @@ using Files = std::unordered_map<std::string, File>;
 
 class FileSystem {
 public:
+    // TODO: persistence
     const Files &getFiles() const;
     void deleteFile(const std::string &name);
     void resetFiles();

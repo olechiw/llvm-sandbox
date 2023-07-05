@@ -9,17 +9,54 @@
 
 #include "model/Diagnostics.h"
 #include "model/FileSystem.h"
+#include "context/ExecutionContext.h"
 
+template<typename Context>
 class CodeActions {
 public:
-    explicit CodeActions(const FileSystem &fileSystem, Diagnostics &diagnostics);
-    void build(const JITCompiler::DynamicLibraries &dynamicLibraries);
-    void runBuiltCode();
+    explicit CodeActions(Diagnostics &diagnostics) : _fileSystem(), _diagnostics(diagnostics) {
+        llvm::InitializeNativeTarget();
+        llvm::InitializeNativeTargetAsmPrinter();
+
+        for (const auto &[fileName, file] : Context::StarterFiles) {
+            _fileSystem.createOrOverwriteFile(file);
+        }
+        for (const auto &[fileName, file] : Context::HelperFiles) {
+            _fileSystem.createOrOverwriteFile(file);
+        }
+    }
+
+    void build() {
+        _diagnostics.push({Diagnostics::Type::System, Diagnostics::Level::Info, "Compiling..."});
+        _compiledCode = JITCompiler::compile(_diagnostics, _fileSystem, Context::DynamicLibraries);
+        const auto result = _compiledCode ? "Compiled" : "Failed to Compile";
+        _diagnostics.push({Diagnostics::Type::System, Diagnostics::Level::Info, result});
+    }
+
+    void runBuiltCode() {
+        if (_compiledCode) {
+            Context::run(std::move(_compiledCode));
+        }
+    }
+
+    std::vector<std::string> takeOutput() {
+        return Context::takeOutput();
+    }
+
+    const FileSystem &getFileSystem() const {
+        return _fileSystem;
+    }
+
+    FileSystem &getFileSystem() {
+        return _fileSystem;
+    }
 private:
     Diagnostics &_diagnostics;
-    const FileSystem &_fileSystem;
+    FileSystem _fileSystem;
     std::unique_ptr<JITCompiler::CompiledCode> _compiledCode { nullptr };
 };
+
+using HelloWorldCodeActions = CodeActions<HelloWorldExecutionContext>;
 
 
 #endif //TESTPROJECT_CODEACTIONS_H

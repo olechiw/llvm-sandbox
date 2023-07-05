@@ -17,9 +17,13 @@
 
 class FileEditorView {
 public:
-    explicit FileEditorView(FileSystem &fileSystem, Diagnostics &diagnostics);
+    explicit FileEditorView(const FileSystem &fileSystem, Diagnostics &diagnostics);
     void render();
-    void saveEvent();
+
+    void saveCurrentFile();
+    Files takeChangedFiles();
+
+    void setFileSystem(const FileSystem &fileSystem);
 
 private:
     struct FileTabState {
@@ -28,15 +32,14 @@ private:
         bool saved { true };
         bool hasRenderedOnce { false };
     };
+    bool _saveCurrentFile { false };
 
     std::unordered_map<std::string, FileTabState> _fileTabs;
-    FileSystem &_fileSystem;
+    Files _changedFiles;
     Diagnostics &_diagnostics;
-    bool _saveEventPending { false };
 
     static TextEditor getDefaultTextEditor();
     void createNewFile();
-    void saveFile(const FileTabState &stateToSave);
 };
 
 
