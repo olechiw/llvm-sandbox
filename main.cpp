@@ -38,6 +38,7 @@ int main() {
     for (const auto &[name, contents] : ExecutionContexts::getHelloWorld().helperFiles) {
         fs.createOrOverwriteFile({{name, File::Type::H, true}, contents});
     }
+    // TODO: decouple mainview from mainwindow?
     MainWindow mainWindow(fs, diagnostics, codeActions);
     mainWindow.show();
 }
