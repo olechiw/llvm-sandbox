@@ -59,16 +59,19 @@ CPPInterpreter::LLVMModuleAndContext CPPInterpreter::buildModule() {
     targetOptions->Triple = LLVM_HOST_TRIPLE;
     auto targetInfo = clang::TargetInfo::CreateTargetInfo(*diagEngine,targetOptions);
     compilerInstance.setTarget(targetInfo);
-    auto includePaths = { "/usr/include/c++/11",
-                          "/usr/include/c++/v1",
-                          "/usr/include/c++/11/tr1",
-                          "/usr/include",
-                          "/usr/include/x86_64-linux-gnu/c++/11",
-                          "/usr/include/x86_64-linux-gnu",
-                          "/usr/include/linux"};
-    for (const auto &path : includePaths) {
+    // clang++-16 -### hello.cpp
+    // yields -internal-isystem and internal-externc-isystem:
+    auto iSystem = {"/usr/bin/../lib/gcc/x86_64-linux-gnu/11/../../../../include/c++/11" , "/usr/bin/../lib/gcc/x86_64-linux-gnu/11/../../../../include/x86_64-linux-gnu/c++/11" , "/usr/bin/../lib/gcc/x86_64-linux-gnu/11/../../../../include/c++/11/backward" , "/usr/lib/llvm-16/lib/clang/16/include" , "/usr/local/include" , "/usr/bin/../lib/gcc/x86_64-linux-gnu/11/../../../../x86_64-linux-gnu/include"};
+    auto iCExtern = {"/usr/include/x86_64-linux-gnu", "/include", "/usr/include"};
+    for (const auto &path : iSystem) {
         compilerInstance.getHeaderSearchOpts().AddPath(path,
                                                        clang::frontend::IncludeDirGroup::System,
+                                                       false,
+                                                       false);
+    }
+    for (const auto &path : iCExtern) {
+        compilerInstance.getHeaderSearchOpts().AddPath(path,
+                                                       clang::frontend::IncludeDirGroup::ExternCSystem,
                                                        false,
                                                        false);
     }
