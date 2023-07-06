@@ -45,7 +45,7 @@ int main() {
             codeActions.getFileSystem().createOrOverwriteFile(file);
         }
         for (const auto &line : codeActions.takeOutput()) {
-            std::cout << line;
+            mainView.appendOutputText(line);
         }
     };
 
