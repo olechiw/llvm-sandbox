@@ -32,13 +32,11 @@ const JITCompiler::DynamicLibraries HelloWorldExecutionContext::DynamicLibraries
 
 std::vector<std::string> HelloWorldExecutionContext::output {};
 
-void HelloWorldExecutionContext::run(std::unique_ptr<JITCompiler::CompiledCode> compiledCode) {
+void HelloWorldExecutionContext::run(JITCompiler::CompiledCode &compiledCode) {
     using MainType = int(*)(void);
-    if (compiledCode) {
-        auto function = compiledCode->functions.find("main");
-        if (function != compiledCode->functions.end()) {
-            ((MainType)function->second)();
-        }
+    auto function = compiledCode.functions.find("main");
+    if (function != compiledCode.functions.end()) {
+        ((MainType) function->second)();
     }
 }
 

@@ -65,6 +65,8 @@ std::unique_ptr<JITCompiler::CompiledCode> JITCompiler::create(Diagnostics &diag
         }
     }
 
+    // TODO: more diagnostics for errors (see cling)
+
     out->engine = std::move(jitEngine);
     return std::move(out);
 }

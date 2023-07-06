@@ -24,7 +24,7 @@ public:
     const static Files HelperFiles;
     const static JITCompiler::DynamicLibraries DynamicLibraries;
 
-    static void run(std::unique_ptr<JITCompiler::CompiledCode> compiledCode);
+    static void run(JITCompiler::CompiledCode &compiledCode);
     static std::vector<std::string> takeOutput();
     static void print(const char *);
     static bool isRunning();

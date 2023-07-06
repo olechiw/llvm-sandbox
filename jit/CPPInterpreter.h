@@ -22,7 +22,8 @@
 #include <clang/Basic/DiagnosticOptions.h>
 #include <clang/Basic/TargetInfo.h>
 #include <clang/CodeGen/CodeGenAction.h>
-
+#include <clang/Lex/HeaderSearchOptions.h>
+#include <clang/Lex/PreprocessorOptions.h>
 #include "../model/Diagnostics.h"
 
 
@@ -38,7 +39,7 @@ public:
     LLVMModuleAndContext buildModule();
 private:
     std::vector<std::string> _additionalCliArguments {};
-    llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> _fs {};
+    llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> _memoryFileSystem {};
     std::vector<std::string> _files {};
     Diagnostics &_diagnostics;
 };

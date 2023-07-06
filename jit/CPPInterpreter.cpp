@@ -5,18 +5,22 @@
 #include "CPPInterpreter.h"
 
 CPPInterpreter::CPPInterpreter(Diagnostics &diagnostics, const std::vector<std::string> &additionalCliArguments) : _diagnostics(diagnostics), _additionalCliArguments(additionalCliArguments) {
-    _fs = llvm::makeIntrusiveRefCnt<llvm::vfs::InMemoryFileSystem>();
+    _memoryFileSystem = llvm::makeIntrusiveRefCnt<llvm::vfs::InMemoryFileSystem>();
+    auto physicalWorkingDir = llvm::vfs::getRealFileSystem()->getCurrentWorkingDirectory();
+    if (physicalWorkingDir) {
+        _memoryFileSystem->setCurrentWorkingDirectory(physicalWorkingDir.get());
+    }
 }
 
 void CPPInterpreter::addFile(const std::string &fileName, const std::string &fileContents, bool header) {
     auto buffer = llvm::MemoryBuffer::getMemBufferCopy(llvm::StringRef(fileContents));
-     _fs->addFile(llvm::Twine(fileName), 0, std::move(buffer));
+     _memoryFileSystem->addFile(llvm::Twine(fileName), 0, std::move(buffer));
      if (!header)
         _files.push_back(fileName);
 }
 
 void CPPInterpreter::resetFiles() {
-    _fs = llvm::makeIntrusiveRefCnt<llvm::vfs::InMemoryFileSystem>();
+    _memoryFileSystem = llvm::makeIntrusiveRefCnt<llvm::vfs::InMemoryFileSystem>();
 }
 
 CPPInterpreter::LLVMModuleAndContext CPPInterpreter::buildModule() {
@@ -29,7 +33,6 @@ CPPInterpreter::LLVMModuleAndContext CPPInterpreter::buildModule() {
     auto diagEngine = new clang::DiagnosticsEngine(diagIDs,
                                                                 diagOpts,
                                                                 diagPrinter);
-
     // Initialize CompilerInvocation
     auto compilerInvocation = std::make_shared<clang::CompilerInvocation>();
     std::vector<const char *> args {};
@@ -38,6 +41,7 @@ CPPInterpreter::LLVMModuleAndContext CPPInterpreter::buildModule() {
         args.push_back(arg.c_str());
     for (const auto &file : _files)
         args.push_back(file.c_str());
+    args.push_back("-stdlib=libstdc++");
     clang::CompilerInvocation::CreateFromArgs(*compilerInvocation, llvm::ArrayRef(args), *diagEngine);
     compilerInvocation->getLangOpts()->CPlusPlus = 1;
     compilerInvocation->getLangOpts()->CPlusPlus20 = 1;
@@ -46,13 +50,28 @@ CPPInterpreter::LLVMModuleAndContext CPPInterpreter::buildModule() {
     compilerInstance.setInvocation(compilerInvocation);
     compilerInstance.setDiagnostics(diagEngine);
 
-    compilerInstance.setFileManager(new clang::FileManager(clang::FileSystemOptions{}, _fs));
+    auto combinedFileSystem = llvm::makeIntrusiveRefCnt<llvm::vfs::OverlayFileSystem>(llvm::vfs::getRealFileSystem());
+    combinedFileSystem->pushOverlay(_memoryFileSystem);
+    compilerInstance.setFileManager(new clang::FileManager(clang::FileSystemOptions{}, combinedFileSystem));
     compilerInstance.createSourceManager(compilerInstance.getFileManager());
 
     const std::shared_ptr<clang::TargetOptions> targetOptions = std::make_shared<clang::TargetOptions>();
     targetOptions->Triple = LLVM_HOST_TRIPLE;
     auto targetInfo = clang::TargetInfo::CreateTargetInfo(*diagEngine,targetOptions);
     compilerInstance.setTarget(targetInfo);
+    auto includePaths = { "/usr/include/c++/11",
+                          "/usr/include/c++/v1",
+                          "/usr/include/c++/11/tr1",
+                          "/usr/include",
+                          "/usr/include/x86_64-linux-gnu/c++/11",
+                          "/usr/include/x86_64-linux-gnu",
+                          "/usr/include/linux"};
+    for (const auto &path : includePaths) {
+        compilerInstance.getHeaderSearchOpts().AddPath(path,
+                                                       clang::frontend::IncludeDirGroup::System,
+                                                       false,
+                                                       false);
+    }
 
     auto action = std::make_shared<clang::EmitLLVMOnlyAction>();
     if (!compilerInstance.ExecuteAction(*action)) {

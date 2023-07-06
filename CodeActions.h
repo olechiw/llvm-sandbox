@@ -35,7 +35,7 @@ public:
 
     void runBuiltCode() {
         if (_compiledCode) {
-            Context::run(std::move(_compiledCode));
+            Context::run(*_compiledCode);
         }
     }
 
