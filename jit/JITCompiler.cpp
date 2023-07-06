@@ -26,6 +26,8 @@ std::unique_ptr<JITCompiler::CompiledCode> JITCompiler::create(Diagnostics &diag
     }
     auto jitEngine = std::move(jitEngineExpected.get());
     auto &dyLib = jitEngine->getMainJITDylib();
+    auto library = llvm::sys::DynamicLibrary::getPermanentLibrary(nullptr);
+    dyLib.addGenerator(std::make_unique<llvm::orc::DynamicLibrarySearchGenerator>(std::move(library), jitEngine->getDataLayout().getGlobalPrefix()));
     auto symbolPool = jitEngine->getExecutionSession().getSymbolStringPool();
     llvm::DenseMap<llvm::orc::SymbolStringPtr, llvm::JITEvaluatedSymbol> symbolsToRegister;
     for (const auto &[symbolName, addr] : dynamicLibraries) {

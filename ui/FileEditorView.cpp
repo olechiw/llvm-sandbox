@@ -18,9 +18,8 @@ void FileEditorView::render() {
                 tabState.saved = false;
             }
             ImGuiTabItemFlags flags = tabState.saved ? 0 : ImGuiTabItemFlags_UnsavedDocument;
-            flags |= tabState.metadata.isReadOnly ? ImGuiTabItemFlags_Trailing : 0;
+//            flags |= tabState.metadata.isReadOnly ? ImGuiTabItemFlags_Trailing : 0;
             if (ImGui::BeginTabItem(name.c_str(), nullptr, flags)) {
-                // TODO: pin readonly tabs to the left
                 tabState.editor.Render(name.c_str());
                 tabState.hasRenderedOnce = true;
                 if (_saveCurrentFile) {
