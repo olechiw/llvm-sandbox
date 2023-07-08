@@ -14,6 +14,7 @@
 template<typename T, int SIZE = 1000> requires std::is_standard_layout_v<T>
 class InterprocessQueue {
     static constexpr auto QUEUE_NAME = "shared_ipc_queue";
+    // TODO: atrocious
     static constexpr auto BLOCK_HEADER_BUFFER_BYTES = 1024;
 public:
     using lockfree_ipc_queue = boost::lockfree::spsc_queue<T, boost::lockfree::capacity<SIZE>>;
