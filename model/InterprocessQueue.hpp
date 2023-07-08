@@ -11,14 +11,15 @@
 #include <boost/interprocess/managed_shared_memory.hpp>
 
 // There is no concept for raw pointers but our types cannot have raw pointers - for simplicity over using an allocator
-template<typename T, int SIZE = 65535> requires std::is_trivial_v<T> && std::is_standard_layout_v<T>
+template<typename T, int SIZE = 1000> requires std::is_standard_layout_v<T>
 class InterprocessQueue {
     static constexpr auto QUEUE_NAME = "shared_ipc_queue";
+    static constexpr auto BLOCK_HEADER_BUFFER_BYTES = 1024;
 public:
     using lockfree_ipc_queue = boost::lockfree::spsc_queue<T, boost::lockfree::capacity<SIZE>>;
     InterprocessQueue(const char *name, boost::interprocess::create_only_t) :
-        _managedSharedMemory{boost::interprocess::create_only, name, sizeof(lockfree_ipc_queue)},
-        _spscQueue {_managedSharedMemory.construct<lockfree_ipc_queue>(QUEUE_NAME)} {
+        _managedSharedMemory{boost::interprocess::create_only, name, sizeof(lockfree_ipc_queue) + BLOCK_HEADER_BUFFER_BYTES},
+        _spscQueue {_managedSharedMemory.construct<lockfree_ipc_queue>(QUEUE_NAME)()} {
     }
     InterprocessQueue(const char *name, boost::interprocess::open_only_t) :
         _managedSharedMemory{boost::interprocess::open_only, name},

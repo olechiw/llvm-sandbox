@@ -14,7 +14,7 @@
 
 int main() {
     Diagnostics diagnostics;
-    HelloWorldCodeActions codeActions(diagnostics);
+    FinanceToyActions codeActions(diagnostics);
 
     FileEditorView fileEditorView(codeActions.getFileSystem(), diagnostics);
     DiagnosticsView diagnosticsView(diagnostics);
@@ -30,6 +30,7 @@ int main() {
         if (mainView.run()) {
             codeActions.runBuiltCode();
         }
+        codeActions.render();
         for (const auto &[fileName, file] : fileEditorView.takeChangedFiles()) {
             codeActions.getFileSystem().createOrOverwriteFile(file);
         }

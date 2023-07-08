@@ -89,7 +89,6 @@ public:
     void render() {
 
     }
-private:
 };
 
 

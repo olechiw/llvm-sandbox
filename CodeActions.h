@@ -10,6 +10,7 @@
 #include "model/Diagnostics.h"
 #include "model/FileSystem.h"
 #include "context/ExecutionContext.h"
+#include "context/FinanceToyContexts.h"
 
 template<typename Context> requires std::is_base_of_v<ExecutionContext<Context>, Context>
 class CodeActions {
@@ -39,6 +40,10 @@ public:
         }
     }
 
+    void render() {
+        Context::getInstance().render();
+    }
+
     std::vector<std::string> takeOutput() {
         return Context::getInstance().takeOutput();
     }
@@ -57,6 +62,6 @@ private:
 };
 
 using HelloWorldCodeActions = CodeActions<HelloWorldExecutionContext>;
-
+using FinanceToyActions = CodeActions<TestFinanceToy>;
 
 #endif //TESTPROJECT_CODEACTIONS_H
