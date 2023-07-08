@@ -18,29 +18,29 @@ public:
         llvm::InitializeNativeTarget();
         llvm::InitializeNativeTargetAsmPrinter();
 
-        for (const auto &[fileName, file] : Context::StarterFiles) {
+        for (const auto &[fileName, file] : Context::getInstance().StarterFiles) {
             _fileSystem.createOrOverwriteFile(file);
         }
-        for (const auto &[fileName, file] : Context::HelperFiles) {
+        for (const auto &[fileName, file] : Context::getInstance().HelperFiles) {
             _fileSystem.createOrOverwriteFile(file);
         }
     }
 
     void build() {
         _diagnostics.push({Diagnostics::Type::System, Diagnostics::Level::Info, "Compiling..."});
-        _compiledCode = JITCompiler::compile(_diagnostics, _fileSystem, Context::DynamicLibraries);
+        _compiledCode = JITCompiler::compile(_diagnostics, _fileSystem, Context::getInstance().DynamicLibraries);
         const auto result = _compiledCode ? "Compiled" : "Failed to Compile";
         _diagnostics.push({Diagnostics::Type::System, Diagnostics::Level::Info, result});
     }
 
     void runBuiltCode() {
         if (_compiledCode) {
-            Context::run(*_compiledCode);
+            Context::getInstance().run(*_compiledCode);
         }
     }
 
     std::vector<std::string> takeOutput() {
-        return Context::takeOutput();
+        return Context::getInstance().takeOutput();
     }
 
     const FileSystem &getFileSystem() const {
