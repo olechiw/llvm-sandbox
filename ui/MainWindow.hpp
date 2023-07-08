@@ -2,8 +2,8 @@
 // Created by jolechiw on 6/28/23.
 //
 
-#ifndef TESTPROJECT_MAINWINDOW_H
-#define TESTPROJECT_MAINWINDOW_H
+#ifndef TESTPROJECT_MAINWINDOW_HPP
+#define TESTPROJECT_MAINWINDOW_HPP
 
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -133,4 +133,4 @@ private:
 };
 
 
-#endif //TESTPROJECT_MAINWINDOW_H
+#endif //TESTPROJECT_MAINWINDOW_HPP

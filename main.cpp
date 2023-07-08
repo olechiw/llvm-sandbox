@@ -2,7 +2,7 @@
 
 #include "jit/CPPInterpreter.h"
 #include "jit/JITCompiler.h"
-#include "ui/MainWindow.h"
+#include "ui/MainWindow.hpp"
 #include "CodeActions.h"
 #include "context/ExecutionContext.h"
 
@@ -11,21 +11,10 @@
 #include <backends/imgui_impl_sdl2.h>
 #include <TextEditor.h>
 
-/**
- * jit/ - contains all uilities for just-in-time compiling
- * model/ - data structure
- * executor/ - runs user code against "puzzles"
- * puzzles/
- * puzzles/ui/ - definitions for puzzle UI
- * puzzles/builtins/ - builtin files that user code can link against
- * ui/ - core UI elements
- */
-
 
 int main() {
     Diagnostics diagnostics;
     HelloWorldCodeActions codeActions(diagnostics);
-
 
     FileEditorView fileEditorView(codeActions.getFileSystem(), diagnostics);
     DiagnosticsView diagnosticsView(diagnostics);
