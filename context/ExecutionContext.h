@@ -37,6 +37,7 @@ public:
 private:
     static T _instance;
 protected:
+    ExecutionContext() = default;
     std::vector<std::string> output {};
 };
 

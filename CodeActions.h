@@ -11,7 +11,7 @@
 #include "model/FileSystem.h"
 #include "context/ExecutionContext.h"
 
-template<typename Context>
+template<typename Context> requires std::is_base_of_v<ExecutionContext<Context>, Context>
 class CodeActions {
 public:
     explicit CodeActions(Diagnostics &diagnostics) : _fileSystem(), _diagnostics(diagnostics) {
