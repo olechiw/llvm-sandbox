@@ -7,6 +7,7 @@
 
 #include <variant>
 #include <string>
+#include <span>
 
 #include "ExecutionContext.h"
 #include "../SubProcess.hpp"
@@ -35,8 +36,9 @@ using FinanceToyPOD = std::variant<MarketPrice, TradedPrice, Output>;
 
 static constexpr auto StarterFile =
         "#include <stdint.h>\n"
+        "#include <iostream>\n"
         "void handle_price_change(uint32_t new_price) {\n"
-        "\n"
+        "\tstd::cout << \"Received: \" << new_price << std::endl;\n"
         "}\n"
         "uint32_t get_buy_quote() {\n"
         "\n"
@@ -79,6 +81,17 @@ public:
         if (!_subProcess) return;
         bool isRunning = _subProcess->isRunning();
 
+        auto captureOutput = [&](int fd) {
+            char buffer[2048];
+            ssize_t result = read(fd, buffer, sizeof(buffer));
+            while (result > 0) {
+                output.emplace_back(std::string_view(buffer, result));
+                result = read(fd, buffer, sizeof(buffer));
+            }
+        };
+        captureOutput(_subProcess->getStdOutFd());
+        captureOutput(_subProcess->getStdErrFd());
+
         FinanceToyPOD nextValue {};
         while (_subProcess->getQueue().pop(nextValue)) {
             auto visitor = [&](auto &&value) {
@@ -97,16 +110,16 @@ public:
         if (!isRunning) {
             switch (_subProcess->getTermSignal()) {
                 case SIGSEGV:
-                    output.push_back("Terminated with SIGSEGV\n");
+                    output.emplace_back("Terminated with SIGSEGV\n");
                     break;
                 case SIGABRT:
-                    output.push_back("Terminated with SIGABRT\n");
+                    output.emplace_back("Terminated with SIGABRT\n");
                     break;
                 case SIGKILL:
-                    output.push_back("Terminated with SIGKILL\n");
+                    output.emplace_back("Terminated with SIGKILL\n");
                     break;
                 default:
-                    output.push_back("Exited normally\n");
+                    output.emplace_back("Exited normally\n");
                     break;
             }
             _subProcess = nullptr;
@@ -114,12 +127,16 @@ public:
     }
 
 private:
-    std::shared_ptr<SPType> _subProcess { nullptr };
+    std::unique_ptr<SPType> _subProcess { nullptr };
     void runImpl(QueueType &messageQueue, JITCompiler::CompiledCode &compiledCode) {
         assert(!_subProcess);
         for (uint32_t i = 0; i != 10; ++i) {
+            using FunctionType = void (*)(uint32_t);
+            void* function = compiledCode.functions["handle_price_change(unsigned int)"];
+            ((FunctionType(function))(i * 5));
             messageQueue.push({MarketPrice{i * 5, i}});
         }
+        // Just for fun to flush cout - our destruction of subProcess happens too quickly
     }
 };
 
