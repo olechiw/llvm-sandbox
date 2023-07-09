@@ -121,7 +121,7 @@ private:
         }
     }
 
-    SubProcess(std::string sharedMemoryName, pid_t childProcessPid, std::unique_ptr<InterprocessQueue<T>> &&queue, int stdOutPipe, int stdErrPipe) :
+    SubProcess(const std::string &sharedMemoryName, pid_t childProcessPid, std::unique_ptr<InterprocessQueue<T>> &&queue, int stdOutPipe, int stdErrPipe) :
         _sharedMemoryName{sharedMemoryName}, _sharedMemoryRAII{sharedMemoryName.c_str()},
         _queue{std::move(queue)},
         _childProcessPid{childProcessPid},
@@ -129,15 +129,19 @@ private:
         _stdErrFd{stdErrPipe}
         {
         }
+
     // Shared memory + destroy on destruction of subprocess
     std::string _sharedMemoryName;
     boost::interprocess::remove_shared_memory_on_destroy _sharedMemoryRAII;
 
+    // Message queue!
     std::unique_ptr<InterprocessQueue<T>> _queue;
-    pid_t _childProcessPid;
 
+    pid_t _childProcessPid;
     int _childProcessStatus { 0 };
     bool _childProcessEnded { false };
+
+    // Read pipes for stdout and stderr capturing
     int _stdOutFd, _stdErrFd;
 
 };

@@ -69,15 +69,20 @@ public:
         auto runFunction = [&](QueueType &messageQueue) {
             runImpl(messageQueue, compiledCode);
         };
-        _subProcess = SPType::spawn(runFunction);
+        try {
+            _subProcess = SPType::spawn(runFunction);
+        } catch (std::runtime_error e) {
+            output.push_back(e.what() + std::string("\n"));
+        }
     }
 
+    // TODO: address these warnings
     bool isRunning() {
         return _subProcess && _subProcess->isRunning();
     }
 
     void render() {
-        // TODO: render
+        // TODO: actually render stuff
         if (!_subProcess) return;
         bool isRunning = _subProcess->isRunning();
 
@@ -136,7 +141,6 @@ private:
             ((FunctionType(function))(i * 5));
             messageQueue.push({MarketPrice{i * 5, i}});
         }
-        // Just for fun to flush cout - our destruction of subProcess happens too quickly
     }
 };
 
