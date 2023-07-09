@@ -27,7 +27,9 @@ public:
     };
 
     std::vector<Diagnostic> take();
+
     void push(const Diagnostic &diagnostic);
+
 private:
     std::vector<Diagnostic> _diagnostics;
     std::mutex _lock;

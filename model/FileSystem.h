@@ -25,10 +25,15 @@ class FileSystem {
 public:
     // TODO: persistence
     const Files &getFiles() const;
+
     void deleteFile(const std::string &name);
+
     void resetFiles();
+
     void setFiles(const Files &fs);
+
     void createOrOverwriteFile(const File &file);
+
 private:
     Files _files;
 };

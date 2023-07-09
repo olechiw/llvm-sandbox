@@ -18,7 +18,7 @@
 
 // TODO: code review + linter
 
-template <typename T>
+template<typename T>
 class SubProcess {
 public:
     using QueueDataType = T;
@@ -67,14 +67,12 @@ public:
     }
 
 private:
-    SubProcess(const std::string &sharedMemoryName, pid_t childProcessPid, std::unique_ptr<InterprocessQueue<QueueDataType>> &&queue, int stdOutPipe, int stdErrPipe) :
-        _sharedMemoryName{sharedMemoryName}, _sharedMemoryRAII{sharedMemoryName.c_str()},
-        _queue{std::move(queue)},
-        _childProcessPid{childProcessPid},
-        _stdOutFd{stdOutPipe},
-        _stdErrFd{stdErrPipe}
-        {
-        }
+    SubProcess(const std::string &sharedMemoryName, pid_t childProcessPid,
+               std::unique_ptr<InterprocessQueue<QueueDataType>> &&queue, int stdOutPipe, int stdErrPipe)
+            : _sharedMemoryName{sharedMemoryName}, _sharedMemoryRAII{sharedMemoryName.c_str()},
+              _queue{std::move(queue)}, _childProcessPid{childProcessPid}, _stdOutFd{stdOutPipe},
+              _stdErrFd{stdErrPipe} {
+    }
 
     // Shared memory + destroy on destruction of subprocess
     std::string _sharedMemoryName;
@@ -84,8 +82,8 @@ private:
     std::unique_ptr<InterprocessQueue<QueueDataType>> _queue;
 
     pid_t _childProcessPid;
-    int _childProcessStatus { 0 };
-    bool _childProcessEnded { false };
+    int _childProcessStatus{0};
+    bool _childProcessEnded{false};
 
     // Read pipes for stdout and stderr capturing
     int _stdOutFd, _stdErrFd;
@@ -105,7 +103,8 @@ std::unique_ptr<SubProcess<T>> SubProcess<T>::spawn(F &subFunctionToRun) {
     // Setup shared memory queue
     boost::uuids::uuid uuid = boost::uuids::random_generator()();
     auto sharedMemoryName = boost::uuids::to_string(uuid);
-    auto ipcQueue = std::make_unique<InterprocessQueue<QueueDataType>>(sharedMemoryName.c_str(), boost::interprocess::create_only);
+    auto ipcQueue = std::make_unique<InterprocessQueue<QueueDataType>>(sharedMemoryName.c_str(),
+                                                                       boost::interprocess::create_only);
 
     // Setup stdout/stderr capturing
     int stdOutPipe[2];
@@ -146,7 +145,9 @@ std::unique_ptr<SubProcess<T>> SubProcess<T>::spawn(F &subFunctionToRun) {
             close(stdErrPipe[1]);
             setPipeNonBlocking(stdErrPipe[0]);
 
-            return std::unique_ptr<SubProcess>(new SubProcess{sharedMemoryName, childProcessPid, std::move(ipcQueue), stdOutPipe[0], stdErrPipe[0]});
+            return std::unique_ptr<SubProcess>(
+                    new SubProcess{sharedMemoryName, childProcessPid, std::move(ipcQueue), stdOutPipe[0],
+                                   stdErrPipe[0]});
     }
 }
 

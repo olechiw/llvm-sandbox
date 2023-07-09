@@ -34,35 +34,25 @@ struct Output {
 
 using FinanceToyPOD = std::variant<MarketPrice, TradedPrice, Output>;
 
-static constexpr auto StarterFile =
-        "#include <stdint.h>\n"
-        "#include <iostream>\n"
-        "void handle_price_change(uint32_t new_price) {\n"
-        "\tstd::cout << \"Received: \" << new_price << std::endl;\n"
-        "}\n"
-        "uint32_t get_buy_quote() {\n"
-        "\n"
-        "}\n"
-        "uint32_t get_sell_quote() {\n"
-        "\n"
-        "}\n";
+static constexpr auto StarterFile = "#include <stdint.h>\n"
+                                    "#include <iostream>\n"
+                                    "void handle_price_change(uint32_t new_price) {\n"
+                                    "\tstd::cout << \"Received: \" << new_price << std::endl;\n"
+                                    "}\n"
+                                    "uint32_t get_buy_quote() {\n"
+                                    "\n"
+                                    "}\n"
+                                    "uint32_t get_sell_quote() {\n"
+                                    "\n"
+                                    "}\n";
 
 class TestFinanceToy : public ExecutionContext<TestFinanceToy> {
     using SPType = SubProcess<FinanceToyPOD>;
     using QueueType = InterprocessQueue<FinanceToyPOD>::ContainerType;
 public:
-    const Files StarterFiles {
-            {"main.cpp",
-             {
-                     {
-                             "main.cpp",
-                             File::Type::CPP,
-                             false},
-                    std::string(StarterFile)}
-            }
-    };
-    const Files HelperFiles {};
-    const JITCompiler::DynamicLibraries DynamicLibraries {};
+    const Files StarterFiles{{"main.cpp", {{"main.cpp", File::Type::CPP, false}, std::string(StarterFile)}}};
+    const Files HelperFiles{};
+    const JITCompiler::DynamicLibraries DynamicLibraries{};
 
     void run(JITCompiler::CompiledCode &compiledCode) {
         assert(!isRunning());
@@ -96,7 +86,7 @@ public:
         captureOutput(_subProcess->getStdOutFd());
         captureOutput(_subProcess->getStdErrFd());
 
-        FinanceToyPOD nextValue {};
+        FinanceToyPOD nextValue{};
         while (_subProcess->getQueue().pop(nextValue)) {
             auto visitor = [&](auto &&value) {
                 using T = std::decay_t<decltype(value)>;
@@ -131,19 +121,18 @@ public:
     }
 
 private:
-    std::unique_ptr<SPType> _subProcess { nullptr };
+    std::unique_ptr<SPType> _subProcess{nullptr};
+
     void runImpl(QueueType &messageQueue, JITCompiler::CompiledCode &compiledCode) {
         assert(!_subProcess);
         for (uint32_t i = 0; i != 10; ++i) {
             using FunctionType = void (*)(uint32_t);
-            void* function = compiledCode.functions["handle_price_change(unsigned int)"];
+            void *function = compiledCode.functions["handle_price_change(unsigned int)"];
             ((FunctionType(function))(i * 5));
             messageQueue.push({MarketPrice{i * 5, i}});
         }
     }
 };
-
-
 
 
 #endif //TESTPROJECT_FINANCETOYCONTEXTS_H

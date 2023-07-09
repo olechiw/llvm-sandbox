@@ -31,16 +31,19 @@ class CPPInterpreter {
 public:
     using LLVMModuleAndContext = std::tuple<std::unique_ptr<llvm::Module>, std::unique_ptr<llvm::LLVMContext>>;
 
-    explicit CPPInterpreter(Diagnostics &diagnostics, const std::vector<std::string> &additionalCliArguments = std::vector<std::string>());
+    explicit CPPInterpreter(Diagnostics &diagnostics,
+                            const std::vector<std::string> &additionalCliArguments = std::vector<std::string>());
 
     void addFile(const std::string &fileName, const std::string &fileContents, bool header = false);
+
     void resetFiles();
 
     LLVMModuleAndContext buildModule();
+
 private:
-    std::vector<std::string> _additionalCliArguments {};
-    llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> _memoryFileSystem {};
-    std::vector<std::string> _files {};
+    std::vector<std::string> _additionalCliArguments{};
+    llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> _memoryFileSystem{};
+    std::vector<std::string> _files{};
     Diagnostics &_diagnostics;
 };
 

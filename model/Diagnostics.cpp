@@ -3,6 +3,7 @@
 //
 
 #include "Diagnostics.h"
+
 void Diagnostics::push(const Diagnostics::Diagnostic &diagnostic) {
     std::unique_lock<std::mutex> raii(_lock);
     _diagnostics.push_back(diagnostic);

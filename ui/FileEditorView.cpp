@@ -13,7 +13,7 @@ FileEditorView::FileEditorView(const FileSystem &fileSystem, Diagnostics &diagno
 
 void FileEditorView::render() {
     if (ImGui::BeginTabBar("Files")) {
-        for (auto &[name, tabState] : _fileTabs) {
+        for (auto &[name, tabState]: _fileTabs) {
             if (tabState.editor.IsTextChanged() && tabState.hasRenderedOnce) {
                 tabState.saved = false;
             }
@@ -50,7 +50,7 @@ void FileEditorView::setFileSystem(const FileSystem &fileSystem) {
     _fileTabs.clear();
     auto &files = fileSystem.getFiles();
     if (!files.empty()) {
-        for (auto &[name, file] : files) {
+        for (auto &[name, file]: files) {
             _fileTabs.insert({name, {file.metadata, getDefaultTextEditor()}});
             _fileTabs[name].editor.SetReadOnly(file.metadata.isReadOnly);
             _fileTabs[name].editor.SetText(file.contents);

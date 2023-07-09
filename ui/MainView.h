@@ -35,14 +35,16 @@ public:
     bool run();
 
     bool save();
+
 private:
     static bool takeFlag(bool &val);
+
     FileEditorView &_fileEditorView;
     DiagnosticsView &_diagnosticsView;
     TextEditor _outputTextView;
     Diagnostics &_diagnostics;
-    bool _is_open { true };
-    bool _build { false }, _run { false }, _save { false };
+    bool _is_open{true};
+    bool _build{false}, _run{false}, _save{false};
 };
 
 

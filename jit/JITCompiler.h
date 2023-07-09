@@ -25,16 +25,23 @@ class JITCompiler {
 public:
     struct CompiledCode {
         friend class JITCompiler;
+
         std::unordered_map<std::string, void *> functions;
     private:
         CompiledCode() = default;
+
         std::unique_ptr<llvm::orc::LLJIT> engine;
     };
 
-    using DynamicLibraries = std::unordered_map<std::string, void*>;
-    static std::unique_ptr<CompiledCode> compile(Diagnostics &diagnostics, const FileSystem &files, const DynamicLibraries &dynamicLibraries = DynamicLibraries());
+    using DynamicLibraries = std::unordered_map<std::string, void *>;
+
+    static std::unique_ptr<CompiledCode> compile(Diagnostics &diagnostics, const FileSystem &files,
+                                                 const DynamicLibraries &dynamicLibraries = DynamicLibraries());
+
 private:
-    static std::unique_ptr<CompiledCode> create(Diagnostics &diagnostics, CPPInterpreter::LLVMModuleAndContext llvmModuleAndContext, const DynamicLibraries &dynamicLibraries);
+    static std::unique_ptr<CompiledCode>
+    create(Diagnostics &diagnostics, CPPInterpreter::LLVMModuleAndContext llvmModuleAndContext,
+           const DynamicLibraries &dynamicLibraries);
 };
 
 

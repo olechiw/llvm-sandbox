@@ -13,7 +13,7 @@ void DiagnosticsView::render() {
     auto diagnostics = _diagnostics.take();
 
     if (!diagnostics.empty()) {
-        for (const auto &diag : diagnostics) {
+        for (const auto &diag: diagnostics) {
             std::string logLine;
             switch (diag.type) {
                 case Diagnostics::Type::System:

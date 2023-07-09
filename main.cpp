@@ -31,10 +31,10 @@ int main() {
             codeActions.runBuiltCode();
         }
         codeActions.render();
-        for (const auto &[fileName, file] : fileEditorView.takeChangedFiles()) {
+        for (const auto &[fileName, file]: fileEditorView.takeChangedFiles()) {
             codeActions.getFileSystem().createOrOverwriteFile(file);
         }
-        for (const auto &line : codeActions.takeOutput()) {
+        for (const auto &line: codeActions.takeOutput()) {
             mainView.appendOutputText(line);
         }
     };

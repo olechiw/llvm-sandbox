@@ -14,9 +14,10 @@ public:
     explicit DiagnosticsView(Diagnostics &diagnostics);
 
     void render();
+
 private:
     Diagnostics &_diagnostics;
-    TextEditor _textEditor {};
+    TextEditor _textEditor{};
 };
 
 

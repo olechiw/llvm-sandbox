@@ -18,9 +18,11 @@
 class FileEditorView {
 public:
     explicit FileEditorView(const FileSystem &fileSystem, Diagnostics &diagnostics);
+
     void render();
 
     void saveCurrentFile();
+
     Files takeChangedFiles();
 
     void setFileSystem(const FileSystem &fileSystem);
@@ -29,16 +31,17 @@ private:
     struct FileTabState {
         File::Metadata metadata;
         TextEditor editor;
-        bool saved { true };
-        bool hasRenderedOnce { false };
+        bool saved{true};
+        bool hasRenderedOnce{false};
     };
-    bool _saveCurrentFile { false };
+    bool _saveCurrentFile{false};
 
     std::unordered_map<std::string, FileTabState> _fileTabs;
     Files _changedFiles;
     Diagnostics &_diagnostics;
 
     static TextEditor getDefaultTextEditor();
+
     void createNewFile();
 };
 

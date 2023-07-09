@@ -12,6 +12,7 @@
 #include "context/ExecutionContext.h"
 #include "context/FinanceToyContexts.h"
 
+// TODO: CodeActionsSwitcher
 template<typename Context> requires std::is_base_of_v<ExecutionContext<Context>, Context>
 class CodeActions {
 public:
@@ -19,10 +20,10 @@ public:
         llvm::InitializeNativeTarget();
         llvm::InitializeNativeTargetAsmPrinter();
 
-        for (const auto &[fileName, file] : Context::getInstance().StarterFiles) {
+        for (const auto &[fileName, file]: Context::getInstance().StarterFiles) {
             _fileSystem.createOrOverwriteFile(file);
         }
-        for (const auto &[fileName, file] : Context::getInstance().HelperFiles) {
+        for (const auto &[fileName, file]: Context::getInstance().HelperFiles) {
             _fileSystem.createOrOverwriteFile(file);
         }
     }
@@ -55,10 +56,11 @@ public:
     FileSystem &getFileSystem() {
         return _fileSystem;
     }
+
 private:
     Diagnostics &_diagnostics;
     FileSystem _fileSystem;
-    std::unique_ptr<JITCompiler::CompiledCode> _compiledCode { nullptr };
+    std::unique_ptr<JITCompiler::CompiledCode> _compiledCode{nullptr};
 };
 
 using HelloWorldCodeActions = CodeActions<HelloWorldExecutionContext>;
