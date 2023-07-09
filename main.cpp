@@ -3,40 +3,40 @@
 #include "jit/CPPInterpreter.h"
 #include "jit/JITCompiler.h"
 #include "ui/MainWindow.hpp"
-#include "CodeActions.h"
-#include "context/ExecutionContext.h"
-
-#include <imgui.h>
-#include <backends/imgui_impl_opengl3.h>
-#include <backends/imgui_impl_sdl2.h>
-#include <TextEditor.h>
-
+#include "execution/CodeActions.h"
 
 int main() {
     Diagnostics diagnostics;
-    FinanceToyActions codeActions(diagnostics);
+    CodeActionsSwitcher codeActions(diagnostics);
 
-    FileEditorView fileEditorView(codeActions.getFileSystem(), diagnostics);
+    FileEditorView fileEditorView(diagnostics);
     DiagnosticsView diagnosticsView(diagnostics);
     MainView mainView(diagnostics, fileEditorView, diagnosticsView);
 
+    codeActions.visit([&](auto &codeActions) {
+        fileEditorView.setFileSystem(codeActions.getFileSystem());
+    });
+    codeActions.setActive(CodeActions<TestFinanceToy>::Name);
+
     auto processEvents = [&](MainView &mainView) {
-        if (mainView.save()) {
-            fileEditorView.saveCurrentFile();
-        }
-        if (mainView.build()) {
-            codeActions.build();
-        }
-        if (mainView.run()) {
-            codeActions.runBuiltCode();
-        }
-        codeActions.render();
-        for (const auto &[fileName, file]: fileEditorView.takeChangedFiles()) {
-            codeActions.getFileSystem().createOrOverwriteFile(file);
-        }
-        for (const auto &line: codeActions.takeOutput()) {
-            mainView.appendOutputText(line);
-        }
+        codeActions.visit([&](auto &codeActions) {
+            if (mainView.save()) {
+                fileEditorView.saveCurrentFile();
+            }
+            if (mainView.build()) {
+                codeActions.build();
+            }
+            if (mainView.run()) {
+                codeActions.runBuiltCode();
+            }
+            codeActions.render();
+            for (const auto &[fileName, file]: fileEditorView.takeChangedFiles()) {
+                codeActions.getFileSystem().createOrOverwriteFile(file);
+            }
+            for (const auto &line: codeActions.takeOutput()) {
+                mainView.appendOutputText(line);
+            }
+        });
     };
 
 

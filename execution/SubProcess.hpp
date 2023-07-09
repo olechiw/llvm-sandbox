@@ -14,7 +14,7 @@
 #include <sys/wait.h>
 #include <ext/stdio_filebuf.h>
 
-#include "model/InterprocessQueue.hpp"
+#include "../model/InterprocessQueue.hpp"
 
 // TODO: code review + linter
 

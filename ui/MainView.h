@@ -14,7 +14,6 @@
 
 #include "../model/Diagnostics.h"
 #include "../model/FileSystem.h"
-#include "../CodeActions.h"
 #include "FileEditorView.h"
 #include "DiagnosticsView.h"
 #include "fonts/IconsFontAwesome5.h"

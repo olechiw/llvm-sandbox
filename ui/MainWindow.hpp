@@ -12,7 +12,7 @@
 #include <backends/imgui_impl_sdl2.h>
 
 #include "MainView.h"
-#include "../CodeActions.h"
+#include "../execution/CodeActions.h"
 #include "fonts/Loader.h"
 
 template<typename F>

@@ -50,6 +50,7 @@ class TestFinanceToy : public ExecutionContext<TestFinanceToy> {
     using SPType = SubProcess<FinanceToyPOD>;
     using QueueType = InterprocessQueue<FinanceToyPOD>::ContainerType;
 public:
+    static constexpr auto Name = "Finance Toy";
     const Files StarterFiles{{"main.cpp", {{"main.cpp", File::Type::CPP, false}, std::string(StarterFile)}}};
     const Files HelperFiles{};
     const JITCompiler::DynamicLibraries DynamicLibraries{};

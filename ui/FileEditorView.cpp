@@ -7,8 +7,7 @@
 #include "fonts/IconsFontAwesome5.h"
 #include "../model/FileSystem.h"
 
-FileEditorView::FileEditorView(const FileSystem &fileSystem, Diagnostics &diagnostics) : _diagnostics(diagnostics) {
-    setFileSystem(fileSystem);
+FileEditorView::FileEditorView(Diagnostics &diagnostics) : _diagnostics(diagnostics) {
 }
 
 void FileEditorView::render() {

@@ -9,8 +9,8 @@
 #include <unordered_map>
 #include <iostream>
 
-#include "../model/FileSystem.h"
-#include "../jit/JITCompiler.h"
+#include "../../model/FileSystem.h"
+#include "../../jit/JITCompiler.h"
 
 
 template<typename T>
@@ -44,6 +44,8 @@ template<typename T> concept IsExecutionContext = requires {
 
 class HelloWorldExecutionContext : public ExecutionContext<HelloWorldExecutionContext> {
 public:
+    static constexpr auto Name = "Hello World";
+
     static void print(const char *value) {
         getInstance().output.emplace_back(value);
     }

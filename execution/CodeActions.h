@@ -5,17 +5,18 @@
 #ifndef TESTPROJECT_CODEACTIONS_H
 #define TESTPROJECT_CODEACTIONS_H
 
-#include "jit/JITCompiler.h"
+#include "../jit/JITCompiler.h"
 
-#include "model/Diagnostics.h"
-#include "model/FileSystem.h"
+#include "../model/Diagnostics.h"
+#include "../model/FileSystem.h"
 #include "context/ExecutionContext.h"
 #include "context/FinanceToyContexts.h"
 
-// TODO: CodeActionsSwitcher
+// TODO: RunTimeSwitcher
 template<typename Context> requires IsExecutionContext<Context>
 class CodeActions {
 public:
+    static constexpr auto Name = Context::Name;
     explicit CodeActions(Diagnostics &diagnostics) : _fileSystem(), _diagnostics(diagnostics) {
         llvm::InitializeNativeTarget();
         llvm::InitializeNativeTargetAsmPrinter();
@@ -69,5 +70,50 @@ private:
 
 using HelloWorldCodeActions = CodeActions<HelloWorldExecutionContext>;
 using FinanceToyActions = CodeActions<TestFinanceToy>;
+
+
+template <typename ...Args>
+class RunTimeSwitcher {
+public:
+    RunTimeSwitcher(auto&& ...constructorArguments) {
+        addSwitch<Args...>(std::forward<decltype(constructorArguments)>(constructorArguments)...);
+        setFirstAsActive<Args...>();
+    }
+
+    std::vector<std::string> getNames() {
+        std::vector<std::string> out;
+        for (const auto &[name, val] : _codeActions) {
+            out.push_back(name);
+        }
+        return out;
+    }
+
+    void setActive(const std::string &name) {
+        _currentlyActive = name;
+    }
+
+    void visit(auto &&callable) {
+        std::visit(std::forward<decltype(callable)>(callable), _codeActions.find(_currentlyActive)->second);
+    }
+private:
+    std::unordered_map<std::string, std::variant<Args...>> _codeActions;
+    std::string _currentlyActive;
+
+    template <typename T, typename ...>
+    void setFirstAsActive() {
+        _currentlyActive = T::Name;
+    }
+
+    template <typename T, typename ...Remaining>
+    void addSwitch(auto && ...constructorArguments) {
+        _codeActions.insert({T::Name, T(std::forward<decltype(constructorArguments)>(constructorArguments)...)});
+        if constexpr (sizeof...(Remaining) > 0) {
+            addSwitch<Remaining...>(std::forward<decltype(constructorArguments)>(constructorArguments)...);
+        }
+    }
+};
+
+using CodeActionsSwitcher = RunTimeSwitcher<HelloWorldCodeActions, FinanceToyActions>;
+
 
 #endif //TESTPROJECT_CODEACTIONS_H

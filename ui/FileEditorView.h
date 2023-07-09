@@ -17,7 +17,7 @@
 
 class FileEditorView {
 public:
-    explicit FileEditorView(const FileSystem &fileSystem, Diagnostics &diagnostics);
+    explicit FileEditorView(Diagnostics &diagnostics);
 
     void render();
 
