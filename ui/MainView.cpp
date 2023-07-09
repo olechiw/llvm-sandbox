@@ -3,7 +3,8 @@
 //
 
 #include "MainView.h"
-
+// TODO: filters for diagnostics
+// TODO: clear output window
 void MainView::render() {
     auto io = ImGui::GetIO();
     ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);

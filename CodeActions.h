@@ -13,7 +13,7 @@
 #include "context/FinanceToyContexts.h"
 
 // TODO: CodeActionsSwitcher
-template<typename Context> requires std::is_base_of_v<ExecutionContext<Context>, Context>
+template<typename Context> requires IsExecutionContext<Context>
 class CodeActions {
 public:
     explicit CodeActions(Diagnostics &diagnostics) : _fileSystem(), _diagnostics(diagnostics) {
