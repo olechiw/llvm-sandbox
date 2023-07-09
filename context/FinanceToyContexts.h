@@ -76,7 +76,6 @@ public:
         }
     }
 
-    // TODO: address these warnings
     bool isRunning() {
         return _subProcess && _subProcess->isRunning();
     }

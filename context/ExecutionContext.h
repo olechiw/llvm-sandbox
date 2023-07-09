@@ -19,17 +19,6 @@ public:
     static T &getInstance() {
         return _instance;
     }
-    void run(JITCompiler::CompiledCode compiledCode) {
-        static_cast<T*>(this)->run(compiledCode);
-    }
-
-    bool isRunning() {
-        return static_cast<T*>(this)->isRunning();
-    }
-
-    void render() {
-        return static_cast<T*>(this)->render();
-    }
 
     std::vector<std::string> takeOutput() {
         return std::move(output);

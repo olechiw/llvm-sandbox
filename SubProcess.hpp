@@ -67,14 +67,6 @@ public:
     }
 
 private:
-    static void setPipeNonBlocking(int pipe) {
-        int nonBlockStatus = fcntl(pipe, F_SETFL, fcntl(pipe, F_GETFL) | O_NONBLOCK);
-        if (nonBlockStatus == -1) {
-            // TODO: warn?
-            throw std::runtime_error("Failed to set pipe non-blocking");
-        }
-    }
-
     SubProcess(const std::string &sharedMemoryName, pid_t childProcessPid, std::unique_ptr<InterprocessQueue<QueueDataType>> &&queue, int stdOutPipe, int stdErrPipe) :
         _sharedMemoryName{sharedMemoryName}, _sharedMemoryRAII{sharedMemoryName.c_str()},
         _queue{std::move(queue)},
@@ -97,6 +89,14 @@ private:
 
     // Read pipes for stdout and stderr capturing
     int _stdOutFd, _stdErrFd;
+
+    static void setPipeNonBlocking(int pipe) {
+        int nonBlockStatus = fcntl(pipe, F_SETFL, fcntl(pipe, F_GETFL) | O_NONBLOCK);
+        if (nonBlockStatus == -1) {
+            // TODO: warn?
+            throw std::runtime_error("Failed to set pipe non-blocking");
+        }
+    }
 };
 
 template<typename T>

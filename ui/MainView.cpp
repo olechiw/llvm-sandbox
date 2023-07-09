@@ -22,7 +22,6 @@ void MainView::render() {
         }
         ImGui::EndMenuBar();
     }
-    // TODO: actionbar class and connect to fileeditor (pipe through context? probably just pipe through here)
     ImGui::Button(ICON_FA_FILE);
     ImGui::SameLine();
     if (ImGui::Button(ICON_FA_SAVE)) {
@@ -30,7 +29,6 @@ void MainView::render() {
         _save = true;
     }
     ImGui::SameLine();
-    bool build {false}, run { false };
     if (ImGui::Button(ICON_FA_HAMMER)) {
         _build = true;
     }
