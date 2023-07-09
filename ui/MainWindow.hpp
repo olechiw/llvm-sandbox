@@ -20,7 +20,7 @@ class MainWindow {
 public:
     static constexpr float fontSize = 13.f;
 
-    explicit MainWindow(MainView &mainView, Diagnostics &diagnostics, F &processEvents) : _processEvents(processEvents),
+    explicit MainWindow(MainView &mainView, F &processEvents) : _eventLoop(processEvents),
                                                                                           _mainView(mainView) {
         // Setup SDL
         if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0) {
@@ -116,7 +116,7 @@ public:
             ImGui::NewFrame();
 
             _mainView.render();
-            _processEvents(_mainView);
+            _eventLoop();
 
             // Rendering
             ImGui::Render();
@@ -133,7 +133,7 @@ private:
     SDL_Window *_window;
     void *_glContext;
     MainView &_mainView;
-    F &_processEvents;
+    F &_eventLoop;
 };
 
 

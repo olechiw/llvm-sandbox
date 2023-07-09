@@ -7,19 +7,27 @@
 
 int main() {
     Diagnostics diagnostics;
-    CodeActionsSwitcher codeActions(diagnostics);
+    CodeActionsSwitcher codeActionsSwitcher(diagnostics);
+    ComboBox contextComboBox("Context Combo Box", codeActionsSwitcher.getNames());
+    contextComboBox.setCurrentOption(codeActionsSwitcher.getActive());
 
     FileEditorView fileEditorView(diagnostics);
     DiagnosticsView diagnosticsView(diagnostics);
-    MainView mainView(diagnostics, fileEditorView, diagnosticsView);
+    MainView mainView(diagnostics, fileEditorView, diagnosticsView, contextComboBox);
 
-    codeActions.visit([&](auto &codeActions) {
+    codeActionsSwitcher.visit([&](auto &codeActions) {
         fileEditorView.setFileSystem(codeActions.getFileSystem());
     });
-    codeActions.setActive(CodeActions<TestFinanceToy>::Name);
+    codeActionsSwitcher.setActive(CodeActions<TestFinanceToy>::Name);
 
-    auto processEvents = [&](MainView &mainView) {
-        codeActions.visit([&](auto &codeActions) {
+    auto eventLoop = [&]() {
+        if (codeActionsSwitcher.getActive() != contextComboBox.getCurrentOption()) {
+            codeActionsSwitcher.setActive(contextComboBox.getCurrentOption());
+            codeActionsSwitcher.visit([&](auto &codeActions) {
+                fileEditorView.setFileSystem(codeActions.getFileSystem());
+            });
+        }
+        codeActionsSwitcher.visit([&](auto &codeActions) {
             if (mainView.save()) {
                 fileEditorView.saveCurrentFile();
             }
@@ -40,7 +48,7 @@ int main() {
     };
 
 
-    MainWindow<decltype(processEvents)> mainWindow(mainView, diagnostics, processEvents);
+    MainWindow<decltype(eventLoop)> mainWindow(mainView, eventLoop);
     mainWindow.show();
 }
 

@@ -80,24 +80,28 @@ public:
         setFirstAsActive<Args...>();
     }
 
-    std::vector<std::string> getNames() {
-        std::vector<std::string> out;
+    std::vector<const char *> getNames() {
+        std::vector<const char *> out;
         for (const auto &[name, val] : _codeActions) {
             out.push_back(name);
         }
         return out;
     }
 
-    void setActive(const std::string &name) {
+    void setActive(const char *name) {
         _currentlyActive = name;
+    }
+
+    const char *getActive() {
+        return _currentlyActive;
     }
 
     void visit(auto &&callable) {
         std::visit(std::forward<decltype(callable)>(callable), _codeActions.find(_currentlyActive)->second);
     }
 private:
-    std::unordered_map<std::string, std::variant<Args...>> _codeActions;
-    std::string _currentlyActive;
+    std::unordered_map<const char *, std::variant<Args...>> _codeActions;
+    const char * _currentlyActive;
 
     template <typename T, typename ...>
     void setFirstAsActive() {

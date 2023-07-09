@@ -20,6 +20,8 @@ void MainView::render() {
         }
         ImGui::EndMenuBar();
     }
+    _contextComboBox.render();
+    ImGui::SameLine();
     ImGui::Button(ICON_FA_FILE);
     ImGui::SameLine();
     if (ImGui::Button(ICON_FA_SAVE)) {
@@ -70,8 +72,8 @@ bool MainView::takeFlag(bool &val) {
     return false;
 }
 
-MainView::MainView(Diagnostics &diagnostics, FileEditorView &fileEditorView, DiagnosticsView &diagnosticsView)
-        : _diagnostics(diagnostics), _diagnosticsView(diagnosticsView), _fileEditorView(fileEditorView) {
+MainView::MainView(Diagnostics &diagnostics, FileEditorView &fileEditorView, DiagnosticsView &diagnosticsView, ComboBox &contextComboBox)
+        : _diagnostics{diagnostics}, _diagnosticsView{diagnosticsView}, _fileEditorView{fileEditorView}, _contextComboBox{contextComboBox} {
     _outputTextView.SetReadOnly(true);
 }
 

@@ -17,11 +17,12 @@
 #include "FileEditorView.h"
 #include "DiagnosticsView.h"
 #include "fonts/IconsFontAwesome5.h"
+#include "ComboBox.h"
 
 
 class MainView {
 public:
-    MainView(Diagnostics &diagnostics, FileEditorView &fileEditorView, DiagnosticsView &diagnosticsView);
+    MainView(Diagnostics &diagnostics, FileEditorView &fileEditorView, DiagnosticsView &diagnosticsView, ComboBox &contextComboBox);
 
     void appendOutputText(const std::string &text);
 
@@ -42,6 +43,7 @@ private:
     DiagnosticsView &_diagnosticsView;
     TextEditor _outputTextView;
     Diagnostics &_diagnostics;
+    ComboBox &_contextComboBox;
     bool _is_open{true};
     bool _build{false}, _run{false}, _save{false};
 };
