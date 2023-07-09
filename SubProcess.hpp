@@ -21,54 +21,11 @@
 template <typename T>
 class SubProcess {
 public:
+    using QueueDataType = T;
+    using QueueType = InterprocessQueue<QueueDataType>::ContainerType;
+
     template<typename F>
-    static std::unique_ptr<SubProcess> spawn(F &subFunctionToRun) {
-        // Setup shared memory queue
-        boost::uuids::uuid uuid = boost::uuids::random_generator()();
-        auto sharedMemoryName = boost::uuids::to_string(uuid);
-        auto ipcQueue = std::make_unique<InterprocessQueue<T>>(sharedMemoryName.c_str(), boost::interprocess::create_only);
-
-        // Setup stdout/stderr capturing
-        int stdOutPipe[2];
-        int stdErrPipe[2];
-        int status = pipe(stdOutPipe);
-        if (status == -1) {
-            throw std::runtime_error("Failed to create pipe for stdout capture");
-        }
-        status = pipe(stdErrPipe);
-        if (status == -1) {
-            throw std::runtime_error("Failed to create pipe for stderr capture");
-        }
-
-        pid_t childProcessPid = fork();
-        switch (childProcessPid) {
-            case -1:
-                throw std::runtime_error("Failed to spawn child process");
-            case 0:
-                for (auto [pipe, pipeToReplace] : {
-                    std::make_tuple(stdOutPipe, STDOUT_FILENO),
-                    std::make_tuple(stdErrPipe, STDERR_FILENO)}) {
-                    // Close reading end - we only write
-                    close(pipe[0]);
-                    // setPipeNonBlocking(pipe[1], true);
-                    dup2(pipe[1], pipeToReplace);
-                }
-                subFunctionToRun(ipcQueue->get());
-                for (auto pipe : {stdOutPipe, stdErrPipe}) {
-                    close(pipe[1]);
-                }
-                // Exit without cleaning up - this process has barely done anything anyway
-                // All cleanup should be done by subFunction
-                _Exit(0);
-            default:
-                for (auto pipe : {stdOutPipe, stdErrPipe}) {
-                    // Close writing end - we only read
-                    close(pipe[1]);
-                    setPipeNonBlocking(pipe[0], false);
-                }
-                return std::unique_ptr<SubProcess>(new SubProcess{sharedMemoryName, childProcessPid, std::move(ipcQueue), stdOutPipe[0], stdErrPipe[0]});
-        }
-    }
+    static std::unique_ptr<SubProcess> spawn(F &subFunctionToRun);
 
     bool stop() {
         assert(isRunning());
@@ -92,7 +49,7 @@ public:
         }
     }
 
-    InterprocessQueue<T>::ContainerType &getQueue() {
+    QueueType &getQueue() {
         return _queue->get();
     }
 
@@ -110,18 +67,15 @@ public:
     }
 
 private:
-    static void setPipeNonBlocking(int pipe, bool isChildProcess) {
+    static void setPipeNonBlocking(int pipe) {
         int nonBlockStatus = fcntl(pipe, F_SETFL, fcntl(pipe, F_GETFL) | O_NONBLOCK);
         if (nonBlockStatus == -1) {
-            if (!isChildProcess) {
-                throw std::runtime_error("Failed to set pipe non-blocking");
-            } else {
-                _Exit(-1);
-            }
+            // TODO: warn?
+            throw std::runtime_error("Failed to set pipe non-blocking");
         }
     }
 
-    SubProcess(const std::string &sharedMemoryName, pid_t childProcessPid, std::unique_ptr<InterprocessQueue<T>> &&queue, int stdOutPipe, int stdErrPipe) :
+    SubProcess(const std::string &sharedMemoryName, pid_t childProcessPid, std::unique_ptr<InterprocessQueue<QueueDataType>> &&queue, int stdOutPipe, int stdErrPipe) :
         _sharedMemoryName{sharedMemoryName}, _sharedMemoryRAII{sharedMemoryName.c_str()},
         _queue{std::move(queue)},
         _childProcessPid{childProcessPid},
@@ -135,7 +89,7 @@ private:
     boost::interprocess::remove_shared_memory_on_destroy _sharedMemoryRAII;
 
     // Message queue!
-    std::unique_ptr<InterprocessQueue<T>> _queue;
+    std::unique_ptr<InterprocessQueue<QueueDataType>> _queue;
 
     pid_t _childProcessPid;
     int _childProcessStatus { 0 };
@@ -143,8 +97,58 @@ private:
 
     // Read pipes for stdout and stderr capturing
     int _stdOutFd, _stdErrFd;
-
 };
+
+template<typename T>
+template<typename F>
+std::unique_ptr<SubProcess<T>> SubProcess<T>::spawn(F &subFunctionToRun) {
+    // Setup shared memory queue
+    boost::uuids::uuid uuid = boost::uuids::random_generator()();
+    auto sharedMemoryName = boost::uuids::to_string(uuid);
+    auto ipcQueue = std::make_unique<InterprocessQueue<QueueDataType>>(sharedMemoryName.c_str(), boost::interprocess::create_only);
+
+    // Setup stdout/stderr capturing
+    int stdOutPipe[2];
+    int stdErrPipe[2];
+    int status = pipe(stdOutPipe);
+    if (status == -1) {
+        throw std::runtime_error("Failed to create pipe for stdout capture");
+    }
+    status = pipe(stdErrPipe);
+    if (status == -1) {
+        throw std::runtime_error("Failed to create pipe for stderr capture");
+    }
+
+    pid_t childProcessPid = fork();
+    switch (childProcessPid) {
+        case -1:
+            throw std::runtime_error("Failed to spawn child process");
+            // Child
+        case 0:
+            // Replace stdout and stderr
+            close(stdOutPipe[0]);
+            dup2(stdOutPipe[1], STDOUT_FILENO);
+            close(stdErrPipe[0]);
+            dup2(stdErrPipe[1], STDERR_FILENO);
+
+            subFunctionToRun(ipcQueue->get());
+
+            close(stdOutPipe[1]);
+            close(stdErrPipe[1]);
+
+            // Exit without cleaning up - this process has barely done anything anyway
+            // All cleanup should be done by subFunction
+            _Exit(0);
+            // Parent
+        default:
+            close(stdOutPipe[1]);
+            setPipeNonBlocking(stdOutPipe[0]);
+            close(stdErrPipe[1]);
+            setPipeNonBlocking(stdErrPipe[0]);
+
+            return std::unique_ptr<SubProcess>(new SubProcess{sharedMemoryName, childProcessPid, std::move(ipcQueue), stdOutPipe[0], stdErrPipe[0]});
+    }
+}
 
 
 #endif //TESTPROJECT_SUBPROCESS_HPP
