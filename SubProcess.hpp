@@ -92,7 +92,7 @@ public:
         }
     }
 
-    InterprocessQueue<T>::lockfree_ipc_queue &getQueue() {
+    InterprocessQueue<T>::ContainerType &getQueue() {
         return _queue->get();
     }
 

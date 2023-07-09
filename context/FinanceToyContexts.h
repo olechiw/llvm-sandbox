@@ -49,7 +49,7 @@ static constexpr auto StarterFile =
 
 class TestFinanceToy : public ExecutionContext<TestFinanceToy> {
     using SPType = SubProcess<FinanceToyPOD>;
-    using QueueType = InterprocessQueue<FinanceToyPOD>::lockfree_ipc_queue;
+    using QueueType = InterprocessQueue<FinanceToyPOD>::ContainerType;
 public:
     const Files StarterFiles {
             {"main.cpp",
