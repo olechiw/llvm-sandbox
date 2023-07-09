@@ -41,6 +41,10 @@ public:
         }
     }
 
+    bool isRunning() {
+        return Context::getInstance().isRunning();
+    }
+
     void render() {
         Context::getInstance().render();
     }
