@@ -29,13 +29,14 @@ int main() {
             });
         }
         contextSwitcher.visit([&](auto &context) {
-            if (mainView.save()) {
+            if (mainView.saveButton.clicked()) {
                 fileEditorView.saveCurrentFile();
             }
-            if (mainView.build()) {
+            if (mainView.buildButton.clicked()) {
                 context.build();
             }
-            if (mainView.run()) {
+            mainView.runButton.setEnabled(context.isBuilt() && !context.isRunning());
+            if (mainView.runButton.clicked()) {
                 context.runBuiltCode();
             }
             context.render();

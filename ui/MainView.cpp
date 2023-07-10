@@ -22,20 +22,13 @@ void MainView::render() {
     }
     _contextComboBox.render();
     ImGui::SameLine();
-    ImGui::Button(ICON_FA_FILE);
+    newButton.render();
     ImGui::SameLine();
-    if (ImGui::Button(ICON_FA_SAVE)) {
-        _diagnostics.push({Diagnostics::Type::System, Diagnostics::Level::Debug, "Save Clicked"});
-        _save = true;
-    }
+    saveButton.render();
     ImGui::SameLine();
-    if (ImGui::Button(ICON_FA_HAMMER)) {
-        _build = true;
-    }
+    buildButton.render();
     ImGui::SameLine();
-    if (ImGui::Button(ICON_FA_PLAY)) {
-        _run = true;
-    }
+    runButton.render();
 
 
     auto regionAvailable = ImGui::GetContentRegionAvail();
@@ -50,30 +43,13 @@ void MainView::render() {
     ImGui::End();
 }
 
-bool MainView::isOpen() const { return _is_open; }
-
-bool MainView::build() {
-    return takeFlag(_build);
-}
-
-bool MainView::run() {
-    return takeFlag(_run);
-}
-
-bool MainView::save() {
-    return takeFlag(_save);
-}
-
-bool MainView::takeFlag(bool &val) {
-    if (val) {
-        val = false;
-        return true;
-    }
-    return false;
+bool MainView::isOpen() const {
+    return _is_open;
 }
 
 MainView::MainView(Diagnostics &diagnostics, FileEditorView &fileEditorView, DiagnosticsView &diagnosticsView, ComboBox &contextComboBox)
-        : _diagnostics{diagnostics}, _diagnosticsView{diagnosticsView}, _fileEditorView{fileEditorView}, _contextComboBox{contextComboBox} {
+        : _diagnostics{diagnostics}, _diagnosticsView{diagnosticsView}, _fileEditorView{fileEditorView}, _contextComboBox{contextComboBox},
+        runButton{ICON_FA_PLAY}, saveButton{ICON_FA_SAVE}, buildButton{ICON_FA_HAMMER}, newButton{ICON_FA_FILE}{
     _outputTextView.SetReadOnly(true);
 }
 
@@ -82,4 +58,25 @@ void MainView::appendOutputText(const std::string &text) {
     _outputTextView.MoveBottom();
     _outputTextView.InsertText(text);
     _outputTextView.SetReadOnly(true);
+}
+
+void MainView::Button::render() {
+    ImGui::BeginDisabled(!_enabled);
+    if (ImGui::Button(_label)) {
+        _clicked = true;
+    }
+    ImGui::EndDisabled();
+}
+
+bool MainView::Button::clicked() {
+    bool tmp = _clicked;
+    _clicked = false;
+    return tmp;
+}
+
+MainView::Button::Button(const char *label): _label{label}, _clicked{false} {
+}
+
+void MainView::Button::setEnabled(bool enabled) {
+    _enabled = enabled;
 }

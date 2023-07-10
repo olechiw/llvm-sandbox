@@ -44,6 +44,10 @@ public:
         }
     }
 
+    bool isBuilt() {
+        return (bool)_compiledCode;
+    }
+
     bool isRunning() {
         return Context::getInstance().isRunning();
     }
