@@ -5,11 +5,13 @@
 #ifndef TESTPROJECT_CONTEXTRUNNER_HPP
 #define TESTPROJECT_CONTEXTRUNNER_HPP
 
+#include <cassert>
+
 #include "../jit/JITCompiler.h"
 
 #include "../model/Diagnostics.h"
 #include "../model/FileSystem.h"
-#include "context/ExecutionContext.h"
+#include "context/BaseExecutionContext.h"
 #include "context/FinanceToyContexts.h"
 
 // TODO: RunTimeSwitcher
@@ -109,6 +111,7 @@ private:
 
     template <typename T, typename ...Remaining>
     void addContext(auto && ...constructorArguments) {
+        assert(_contexts.find(T::Name) == _contexts.end()); // Cannot register multiple contexts with the same name
         _contexts.insert({T::Name, T(std::forward<decltype(constructorArguments)>(constructorArguments)...)});
         if constexpr (sizeof...(Remaining) > 0) {
             addContext<Remaining...>(std::forward<decltype(constructorArguments)>(constructorArguments)...);
