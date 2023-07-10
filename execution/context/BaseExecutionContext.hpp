@@ -2,8 +2,8 @@
 // Created by jolechiw on 7/5/23.
 //
 
-#ifndef TESTPROJECT_BASEEXECUTIONCONTEXT_H
-#define TESTPROJECT_BASEEXECUTIONCONTEXT_H
+#ifndef TESTPROJECT_BASEEXECUTIONCONTEXT_HPP
+#define TESTPROJECT_BASEEXECUTIONCONTEXT_HPP
 
 #include <string>
 #include <unordered_map>
@@ -15,29 +15,37 @@
 #include "../../model/InterprocessQueue.hpp"
 #include "../SubProcess.hpp"
 
-template<typename T, typename M> concept IsRunnableWithQueue = requires {
+template<typename T, typename M> concept IsRunnableExecutionContextWithQueue = requires {
     std::is_invocable_v<decltype(&T::runImpl), T &, JITCompiler::CompiledCode &, typename InterprocessQueue<M>::ContainerType &>;
 };
 
-template<typename T> concept IsRunnable = requires {
+template<typename T> concept IsRunnableExecutionContext = requires {
     std::is_invocable_v<decltype(&T::runImpl), T &, JITCompiler::CompiledCode &>;
 };
 
 
 template<typename M>
 struct SharedMemory {
+    SharedMemory(const std::string &sharedMemoryName) :
+        sharedMemoryName{sharedMemoryName},
+        sharedMemoryRAII{sharedMemoryName.c_str()},
+        sharedMemoryQueue{sharedMemoryName.c_str(), boost::interprocess::create_only} {
+
+    }
     std::string sharedMemoryName;
     boost::interprocess::remove_shared_memory_on_destroy sharedMemoryRAII;
     InterprocessQueue<M> sharedMemoryQueue;
 };
 
 template<>
-struct SharedMemory<void> {};
+struct SharedMemory<void> {
+};
 
 template<typename T, typename M = void>
 class BaseExecutionContext {
 public:
     using MessageType = M;
+
     static T &getInstance() {
         return _instance;
     }
@@ -46,9 +54,10 @@ public:
         assert(!isRunning());
         _isChildProcess = true;
         try {
-            if constexpr (IsRunnableWithQueue<T, MessageType>) {
+            if constexpr (IsRunnableExecutionContextWithQueue<T, MessageType>) {
                 runWithQueue(compiledCode);
             } else {
+                static_assert(IsRunnableExecutionContext<T>);
                 runWithoutQueue(compiledCode);
             }
         } catch (std::runtime_error e) {
@@ -72,11 +81,11 @@ public:
         captureOutput(_subProcess->getStdOutFd());
         captureOutput(_subProcess->getStdErrFd());
 
-        if constexpr (IsRunnableWithQueue<T, MessageType>) {
+        if constexpr (IsRunnableExecutionContextWithQueue<T, MessageType>) {
             assert(_sharedMemory);
-            static_cast<T*>(this)->renderImpl(_sharedMemory->sharedMemoryQueue.get());
+            static_cast<T *>(this)->renderImpl(_sharedMemory->sharedMemoryQueue.get());
         } else {
-            static_cast<T*>(this)->renderImpl();
+            static_cast<T *>(this)->renderImpl();
         }
 
         if (!isRunning) {
@@ -114,15 +123,13 @@ public:
 
 protected:
     BaseExecutionContext() = default;
+
 private:
     void runWithQueue(JITCompiler::CompiledCode &compiledCode) {
         boost::uuids::uuid uuid = boost::uuids::random_generator()();
         auto sharedMemoryName = boost::uuids::to_string(uuid);
-        _sharedMemory = std::unique_ptr<SharedMemory<M>>(new SharedMemory<M>{
-                sharedMemoryName,
-                {sharedMemoryName.c_str()},
-                {sharedMemoryName.c_str(), boost::interprocess::create_only}});
-        T &impl = *static_cast<T*>(this);
+        _sharedMemory = std::unique_ptr<SharedMemory<M>>(new SharedMemory<M>{sharedMemoryName});
+        T &impl = *static_cast<T *>(this);
         auto wrapper = [&](JITCompiler::CompiledCode &compiledCode, InterprocessQueue<M>::ContainerType &queue) {
             impl.runImpl(compiledCode, queue);
         };
@@ -130,7 +137,7 @@ private:
     }
 
     void runWithoutQueue(JITCompiler::CompiledCode &compiledCode) {
-        T &impl = *static_cast<T*>(this);
+        T &impl = *static_cast<T *>(this);
         auto wrapper = [&](JITCompiler::CompiledCode &compiledCode) {
             impl.runImpl(compiledCode);
         };
@@ -139,21 +146,24 @@ private:
 
     static T _instance;
     std::vector<std::string> output{};
-    std::unique_ptr<SubProcess> _subProcess { nullptr };
-    std::unique_ptr<SharedMemory<M>> _sharedMemory { nullptr };
-    bool _isChildProcess { false };
+    std::unique_ptr<SubProcess> _subProcess{nullptr};
+    std::unique_ptr<SharedMemory<M>> _sharedMemory{nullptr};
+    bool _isChildProcess{false};
 };
 
 template<typename T, typename M> T BaseExecutionContext<T, M>::_instance;
 
 class HelloWorldExecutionContext : public BaseExecutionContext<HelloWorldExecutionContext> {
 public:
+    // Required name of context
     static constexpr auto Name = "Hello World";
 
+    // Optional inclusion of static libraries
     static void print(const char *value) {
         std::cout << value;
     }
 
+    // Required context info including starting filesystems (can all be empty)
     const Files StarterFiles{{"main.cpp", {{"main.cpp", File::Type::CPP, false},
                                            "#include \"system_headers.h\"\n\nint main() {\n\tprint(\"Hello World\\n\");\n}"}}};
     const Files HelperFiles{
@@ -162,6 +172,7 @@ public:
             {"print(char const*)", (void *) HelloWorldExecutionContext::print}};
 private:
     friend class BaseExecutionContext<HelloWorldExecutionContext>;
+
     // Always runs in the child process
     void runImpl(JITCompiler::CompiledCode &compiledCode) {
         using MainType = int (*)();
@@ -177,12 +188,10 @@ private:
 };
 
 template<typename T> concept IsExecutionContext = requires {
-    std::is_base_of_v<BaseExecutionContext<T>, T> &&
-    std::is_same_v<decltype(T::Name), const char * const> &&
-    std::is_same_v<decltype(T::StarterFiles), const Files> &&
-    std::is_same_v<decltype(T::HelperFiles), const Files> &&
+    std::is_base_of_v<BaseExecutionContext<T>, T> && std::is_same_v<decltype(T::Name), const char *const> &&
+    std::is_same_v<decltype(T::StarterFiles), const Files> && std::is_same_v<decltype(T::HelperFiles), const Files> &&
     std::is_same_v<decltype(T::DynamicLibraries), const JITCompiler::DynamicLibraries>;
 };
 
 
-#endif //TESTPROJECT_BASEEXECUTIONCONTEXT_H
+#endif //TESTPROJECT_BASEEXECUTIONCONTEXT_HPP

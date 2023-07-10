@@ -11,7 +11,7 @@
 
 #include "../model/Diagnostics.h"
 #include "../model/FileSystem.h"
-#include "context/BaseExecutionContext.h"
+#include "context/BaseExecutionContext.hpp"
 #include "context/FinanceToyContexts.h"
 
 // TODO: RunTimeSwitcher
