@@ -75,9 +75,8 @@ using FinanceToyActions = CodeActions<TestFinanceToy>;
 template <typename ...Args>
 class RunTimeSwitcher {
 public:
-    RunTimeSwitcher(auto&& ...constructorArguments) {
+    RunTimeSwitcher(auto&& ...constructorArguments) : _currentlyActive{getFirstItemName<Args...>()} {
         addSwitch<Args...>(std::forward<decltype(constructorArguments)>(constructorArguments)...);
-        setFirstAsActive<Args...>();
     }
 
     std::vector<const char *> getNames() {
@@ -104,8 +103,8 @@ private:
     const char * _currentlyActive;
 
     template <typename T, typename ...>
-    void setFirstAsActive() {
-        _currentlyActive = T::Name;
+    static const char *getFirstItemName() {
+        return T::Name;
     }
 
     template <typename T, typename ...Remaining>
