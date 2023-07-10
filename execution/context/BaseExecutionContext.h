@@ -151,7 +151,7 @@ public:
     static constexpr auto Name = "Hello World";
 
     static void print(const char *value) {
-        std::cout << value << std::endl;
+        std::cout << value;
     }
 
     const Files StarterFiles{{"main.cpp", {{"main.cpp", File::Type::CPP, false},

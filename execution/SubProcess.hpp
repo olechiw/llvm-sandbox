@@ -105,13 +105,15 @@ std::unique_ptr<SubProcess> SubProcess::spawn(F &&subFunctionToRun, Args &&...ar
 
             subFunctionToRun(std::forward<Args>(args)...);
 
+            std::cout.flush();
+            std::cerr.flush();
+
             close(stdOutPipe[1]);
             close(stdErrPipe[1]);
 
             // Exit without cleaning up - this process has barely done anything anyway
             // All cleanup should be done by subFunction
-//            _Exit(0);
-            exit(0);
+            _Exit(0);
             // Parent
         default:
             close(stdOutPipe[1]);
