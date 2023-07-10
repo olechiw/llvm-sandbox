@@ -3,45 +3,46 @@
 #include "jit/CPPInterpreter.h"
 #include "jit/JITCompiler.h"
 #include "ui/MainWindow.hpp"
-#include "execution/CodeActions.h"
+#include "execution/ContextRunner.hpp"
 
 int main() {
     Diagnostics diagnostics;
-    CodeActionsSwitcher codeActionsSwitcher(diagnostics);
-    ComboBox contextComboBox("Context Combo Box", codeActionsSwitcher.getNames());
-    contextComboBox.setCurrentOption(codeActionsSwitcher.getActive());
+    ContextSwitcher contextSwitcher(diagnostics);
+    contextSwitcher.setActive(ContextRunner<TestFinanceToy>::Name);
+
+    ComboBox contextComboBox("##Context Combo Box", "Context", contextSwitcher.getNames());
+    contextComboBox.setCurrentOption(contextSwitcher.getActive());
 
     FileEditorView fileEditorView(diagnostics);
     DiagnosticsView diagnosticsView(diagnostics);
     MainView mainView(diagnostics, fileEditorView, diagnosticsView, contextComboBox);
 
-    codeActionsSwitcher.visit([&](auto &codeActions) {
-        fileEditorView.setFileSystem(codeActions.getFileSystem());
+    contextSwitcher.visit([&](auto &context) {
+        fileEditorView.setFileSystem(context.getFileSystem());
     });
-    codeActionsSwitcher.setActive(CodeActions<TestFinanceToy>::Name);
 
     auto eventLoop = [&]() {
-        if (codeActionsSwitcher.getActive() != contextComboBox.getCurrentOption()) {
-            codeActionsSwitcher.setActive(contextComboBox.getCurrentOption());
-            codeActionsSwitcher.visit([&](auto &codeActions) {
-                fileEditorView.setFileSystem(codeActions.getFileSystem());
+        if (contextSwitcher.getActive() != contextComboBox.getCurrentOption()) {
+            contextSwitcher.setActive(contextComboBox.getCurrentOption());
+            contextSwitcher.visit([&](auto &context) {
+                fileEditorView.setFileSystem(context.getFileSystem());
             });
         }
-        codeActionsSwitcher.visit([&](auto &codeActions) {
+        contextSwitcher.visit([&](auto &context) {
             if (mainView.save()) {
                 fileEditorView.saveCurrentFile();
             }
             if (mainView.build()) {
-                codeActions.build();
+                context.build();
             }
             if (mainView.run()) {
-                codeActions.runBuiltCode();
+                context.runBuiltCode();
             }
-            codeActions.render();
+            context.render();
             for (const auto &[fileName, file]: fileEditorView.takeChangedFiles()) {
-                codeActions.getFileSystem().createOrOverwriteFile(file);
+                context.getFileSystem().createOrOverwriteFile(file);
             }
-            for (const auto &line: codeActions.takeOutput()) {
+            for (const auto &line: context.takeOutput()) {
                 mainView.appendOutputText(line);
             }
         });

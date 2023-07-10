@@ -12,7 +12,7 @@
 
 class ComboBox {
 public:
-    ComboBox(const char *name, const std::vector<const char *> &options);
+    ComboBox(const char *name, const char *label, const std::vector<const char *> &options);
 
     void render();
 
@@ -24,6 +24,7 @@ private:
     std::vector<const char *> _options;
     const char *_name;
     const char *_currentOption{nullptr};
+    const char *_label;
 };
 
 

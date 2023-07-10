@@ -2,8 +2,8 @@
 // Created by jolechiw on 7/5/23.
 //
 
-#ifndef TESTPROJECT_CODEACTIONS_H
-#define TESTPROJECT_CODEACTIONS_H
+#ifndef TESTPROJECT_CONTEXTRUNNER_HPP
+#define TESTPROJECT_CONTEXTRUNNER_HPP
 
 #include "../jit/JITCompiler.h"
 
@@ -14,10 +14,10 @@
 
 // TODO: RunTimeSwitcher
 template<typename Context> requires IsExecutionContext<Context>
-class CodeActions {
+class ContextRunner {
 public:
     static constexpr auto Name = Context::Name;
-    explicit CodeActions(Diagnostics &diagnostics) : _fileSystem(), _diagnostics(diagnostics) {
+    explicit ContextRunner(Diagnostics &diagnostics) : _fileSystem(), _diagnostics(diagnostics) {
         llvm::InitializeNativeTarget();
         llvm::InitializeNativeTargetAsmPrinter();
 
@@ -68,20 +68,20 @@ private:
     std::unique_ptr<JITCompiler::CompiledCode> _compiledCode{nullptr};
 };
 
-using HelloWorldCodeActions = CodeActions<HelloWorldExecutionContext>;
-using FinanceToyActions = CodeActions<TestFinanceToy>;
+using HelloWorldRunner = ContextRunner<HelloWorldExecutionContext>;
+using FinanceToyRunner = ContextRunner<TestFinanceToy>;
 
 
 template <typename ...Args>
-class RunTimeSwitcher {
+class RuntimeSwitcher {
 public:
-    RunTimeSwitcher(auto&& ...constructorArguments) : _currentlyActive{getFirstItemName<Args...>()} {
-        addSwitch<Args...>(std::forward<decltype(constructorArguments)>(constructorArguments)...);
+    RuntimeSwitcher(auto&& ...constructorArguments) : _currentlyActive{getFirstItemName<Args...>()} {
+        addContext<Args...>(std::forward<decltype(constructorArguments)>(constructorArguments)...);
     }
 
     std::vector<const char *> getNames() {
         std::vector<const char *> out;
-        for (const auto &[name, val] : _codeActions) {
+        for (const auto &[name, val] : _contexts) {
             out.push_back(name);
         }
         return out;
@@ -96,10 +96,10 @@ public:
     }
 
     void visit(auto &&callable) {
-        std::visit(std::forward<decltype(callable)>(callable), _codeActions.find(_currentlyActive)->second);
+        std::visit(std::forward<decltype(callable)>(callable), _contexts.find(_currentlyActive)->second);
     }
 private:
-    std::unordered_map<const char *, std::variant<Args...>> _codeActions;
+    std::unordered_map<const char *, std::variant<Args...>> _contexts;
     const char * _currentlyActive;
 
     template <typename T, typename ...>
@@ -108,15 +108,15 @@ private:
     }
 
     template <typename T, typename ...Remaining>
-    void addSwitch(auto && ...constructorArguments) {
-        _codeActions.insert({T::Name, T(std::forward<decltype(constructorArguments)>(constructorArguments)...)});
+    void addContext(auto && ...constructorArguments) {
+        _contexts.insert({T::Name, T(std::forward<decltype(constructorArguments)>(constructorArguments)...)});
         if constexpr (sizeof...(Remaining) > 0) {
-            addSwitch<Remaining...>(std::forward<decltype(constructorArguments)>(constructorArguments)...);
+            addContext<Remaining...>(std::forward<decltype(constructorArguments)>(constructorArguments)...);
         }
     }
 };
 
-using CodeActionsSwitcher = RunTimeSwitcher<HelloWorldCodeActions, FinanceToyActions>;
+using ContextSwitcher = RuntimeSwitcher<HelloWorldRunner, FinanceToyRunner>;
 
 
-#endif //TESTPROJECT_CODEACTIONS_H
+#endif //TESTPROJECT_CONTEXTRUNNER_HPP
