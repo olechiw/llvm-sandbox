@@ -23,7 +23,9 @@
 class MainView {
 public:
     class Button;
-    MainView(Diagnostics &diagnostics, FileEditorView &fileEditorView, DiagnosticsView &diagnosticsView, ComboBox &contextComboBox);
+
+    MainView(Diagnostics &diagnostics, FileEditorView &fileEditorView, DiagnosticsView &diagnosticsView,
+             ComboBox &contextComboBox);
 
     void appendOutputText(const std::string &text);
 
@@ -31,25 +33,24 @@ public:
 
     bool isOpen() const;
 
-    bool build();
-
-    bool run();
-
-    bool save();
-
-
     class Button {
     public:
         bool clicked();
+
         void setEnabled(bool enabled);
+
     private:
         const char *_label;
-        bool _enabled { true };
-        bool _clicked { false };
+        bool _enabled{true};
+        bool _clicked{false};
+
         void render();
+
         Button(const char *label);
+
         friend class MainView;
     };
+
     Button runButton, saveButton, buildButton, newButton;
 
 private:

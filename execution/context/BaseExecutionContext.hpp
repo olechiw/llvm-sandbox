@@ -67,28 +67,29 @@ public:
     }
 
     void render() {
-        if (!_subProcess) return;
-        bool isRunning = _subProcess->isRunning();
+        bool running = isRunning();
 
-        auto captureOutput = [&](int fd) {
-            char buffer[2048];
-            ssize_t result = read(fd, buffer, sizeof(buffer));
-            while (result > 0) {
-                output.emplace_back(std::string_view(buffer, result));
-                result = read(fd, buffer, sizeof(buffer));
-            }
-        };
-        captureOutput(_subProcess->getStdOutFd());
-        captureOutput(_subProcess->getStdErrFd());
-
+        if (_subProcess) {
+                auto captureOutput = [&](int fd) {
+                    char buffer[2048];
+                    ssize_t result = read(fd, buffer, sizeof(buffer));
+                    while (result > 0) {
+                        output.emplace_back(std::string_view(buffer, result));
+                        result = read(fd, buffer, sizeof(buffer));
+                    }
+                };
+                captureOutput(_subProcess->getStdOutFd());
+                captureOutput(_subProcess->getStdErrFd());
+        }
         if constexpr (IsRunnableExecutionContextWithQueue<T, MessageType>) {
-            assert(_sharedMemory);
-            static_cast<T *>(this)->renderImpl(_sharedMemory->sharedMemoryQueue.get());
+            if (_sharedMemory) {
+                static_cast<T *>(this)->renderImpl(_sharedMemory->sharedMemoryQueue.get());
+            }
         } else {
             static_cast<T *>(this)->renderImpl();
         }
 
-        if (!isRunning) {
+        if (!running && _subProcess) {
             switch (_subProcess->getTermSignal()) {
                 case SIGSEGV:
                     output.emplace_back("Terminated with SIGSEGV\n");
@@ -104,7 +105,6 @@ public:
                     break;
             }
             _subProcess = nullptr;
-            _sharedMemory = nullptr;
         }
     }
 
@@ -126,9 +126,12 @@ protected:
 
 private:
     void runWithQueue(JITCompiler::CompiledCode &compiledCode) {
-        boost::uuids::uuid uuid = boost::uuids::random_generator()();
-        auto sharedMemoryName = boost::uuids::to_string(uuid);
-        _sharedMemory = std::unique_ptr<SharedMemory<M>>(new SharedMemory<M>{sharedMemoryName});
+        if (!_sharedMemory) {
+            boost::uuids::uuid uuid = boost::uuids::random_generator()();
+            auto sharedMemoryName = boost::uuids::to_string(uuid);
+            _sharedMemory = std::unique_ptr<SharedMemory<M>>(new SharedMemory<M>{sharedMemoryName});
+        }
+
         T &impl = *static_cast<T *>(this);
         auto wrapper = [&](JITCompiler::CompiledCode &compiledCode, InterprocessQueue<M>::ContainerType &queue) {
             impl.runImpl(compiledCode, queue);

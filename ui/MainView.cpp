@@ -11,7 +11,7 @@ void MainView::render() {
     ImGui::SetNextWindowPos({0, 0});
     ImGui::Begin("MainWindow", &_is_open,
                  ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse |
-                 ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoTitleBar);
+                 ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBringToFrontOnFocus);
 
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu("File")) {
