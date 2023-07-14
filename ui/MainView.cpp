@@ -5,6 +5,7 @@
 #include "MainView.h"
 // TODO: filters for diagnostics
 // TODO: clear output window
+// TODO: disable imgui.ini (?)
 void MainView::render() {
     auto io = ImGui::GetIO();
     ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);

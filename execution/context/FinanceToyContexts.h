@@ -57,7 +57,9 @@ public:
 
 private:
     friend class BaseExecutionContext<TestFinanceToy, FinanceToyPOD>;
+
     std::vector<float> data;
+
     void renderImpl(QueueType &queue);
 
     void runImpl(JITCompiler::CompiledCode &compiledCode, QueueType &messageQueue);
